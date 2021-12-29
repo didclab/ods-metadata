@@ -5,8 +5,8 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.5.3</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <version>2.6.2</version>
+        <relativePath/>
     </parent>
     <groupId>org.onedatashare</groupId>
     <artifactId>ods-metadata</artifactId>
@@ -15,7 +15,7 @@
     <description>OneDataShare Service that exposes the Data in CDB to other services.</description>
     <properties>
         <java.version>11</java.version>
-        <spring-cloud.version>2020.0.3</spring-cloud.version>
+        <spring-cloud.version>2021.0.0</spring-cloud.version>
     </properties>
     <dependencies>
         <dependency>
@@ -38,7 +38,6 @@
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
