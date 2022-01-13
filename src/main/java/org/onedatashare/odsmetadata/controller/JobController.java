@@ -65,7 +65,7 @@ public class JobController {
      * @param from
      * @return
      */
-    @GetMapping("/stats/{userId}/date")
+    @GetMapping("/stats/{userId}/date/range")
     public List<JobStatistics> getUserJobsByDateRange(@PathVariable String userId,
                                                       @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date to,
                                                       @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date from){
