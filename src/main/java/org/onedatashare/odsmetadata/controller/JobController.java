@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
 public class JobController {
 
     @Autowired
-    QueryingService queryingService = new QueryingService();
+    QueryingService queryingService;
     private static final Logger logger = LoggerFactory.getLogger(JobController.class);
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
@@ -36,7 +36,7 @@ public class JobController {
      * @return List of jobIds
      */
     @GetMapping("/{userId}")
-    public String getUserJobIds(@PathVariable String userId){
+    public List <String> getUserJobIds(@PathVariable String userId){
         ArrayList <String> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
@@ -44,7 +44,7 @@ public class JobController {
         }
         else
             logger.info("Invalid User Id"+userId);
-        return userIdList.toString();
+        return userIdList;
     }
 
     /**
