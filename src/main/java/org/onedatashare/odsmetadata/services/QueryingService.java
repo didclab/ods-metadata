@@ -11,8 +11,9 @@ import java.util.List;
 
 @Repository
 public class QueryingService {
+    @Autowired
     private JdbcTemplate jdbcTemplate;
-    private final String QUERY_GETUSERJOBIDS ="select job_execution_id from batch_job_execution_params where string_val ilike= ?)";
+    private final String QUERY_GETUSERJOBIDS ="select job_execution_id from batch_job_execution_params where string_val like= ?)";
     private final String QUERY_GETAllJOBSTATISTICSOFUSER ="select job_execution_id,start_time,end_time,status,last_updated from batch_job_execution where job_execution_id in (select job_execution_id from batch_job_execution_params where string_val = ?)";
     private final String QUERY_GETJOBSTAT ="select job_execution_id,start_time,end_time,status,last_updated from batch_job_execution where job_execution_id  = ?";
     private final String QUERY_GETUSERJOBSBYDATE ="select * from batch_job_execution where USERID = ? and start_time=?";
