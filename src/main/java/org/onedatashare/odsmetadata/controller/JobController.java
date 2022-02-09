@@ -7,11 +7,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.validation.Valid;
+import javax.ws.rs.PathParam;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,25 +20,26 @@ import java.util.regex.Pattern;
  * This controller allows a user to query jobs that they have submitted form CockroachDB
  */
 @RestController
-@RequestMapping("/api/v1/job")
+@RequestMapping("/api/v1/meta")
 public class JobController {
 
     @Autowired
     QueryingService queryingService;
     private static final Logger logger = LoggerFactory.getLogger(JobController.class);
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
-            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
+            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userId is an email
     /**
      * Returns all the jobs with the corresponding userId
      * This call should be done if you only want the JobIds
      * @param userId
      * @return List of jobIds
      */
-    @GetMapping("/{userId}")
-    public List <String> getUserJobIds(@PathVariable String userId){
+    @GetMapping("/user_jobs")
+    public List <String> getUserJobIds(@RequestParam(value="userId") String userId){
         ArrayList <String> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
+            logger.info(userId);
             userIdList = (ArrayList<@Valid String>) queryingService.queryUserJobIds(userId);
         }
         else
@@ -52,8 +52,8 @@ public class JobController {
      * @param userId
      * @return A list of all JobStatistics involving a user
      */
-    @GetMapping("/stats/{userId}")
-    public List<JobStatistics> getAllJobStatisticsOfUser(@PathVariable String userId){
+    @GetMapping("/all_stats")
+    public List<JobStatistics> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
         List <JobStatistics> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
@@ -69,8 +69,8 @@ public class JobController {
      * @param jobId
      * @return
      */
-    @GetMapping("/stats/{jobId}")
-    public JobStatistics getJobStat(@PathVariable String jobId){
+    @GetMapping("/stat")
+    public JobStatistics getJobStat(@RequestParam(value = "jobId") String jobId){
         List <JobStatistics> anyJobStat = new ArrayList<>();
         String regex = "\\d+";
         boolean flag = jobId.matches(regex);
@@ -85,8 +85,8 @@ public class JobController {
      * @param date
      * @return
      */
-    @GetMapping("/stats/{userId}/date")
-    public List<JobStatistics> getUserJobsByDate(@PathVariable String userId, @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date date){
+    @GetMapping("/stats/date")
+    public List<JobStatistics> getUserJobsByDate(@RequestParam(value="userid") String userId, @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date date){
         List <JobStatistics> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         /*
@@ -97,7 +97,7 @@ public class JobController {
         }
         else
             logger.info("Invalid User Id"+userId);
-        return (List<JobStatistics>) userJobsBydate;
+        return userJobsBydate;
     }
 
     /**
@@ -106,8 +106,8 @@ public class JobController {
      * @param from
      * @return
      */
-    @GetMapping("/stats/{userId}/date/range")
-    public List<JobStatistics> getUserJobsByDateRange(@PathVariable String userId,
+    @GetMapping("/stats/date/range")
+    public List<JobStatistics> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
                                                       @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date to,
                                                       @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date from){
 
@@ -123,6 +123,7 @@ public class JobController {
     }
 
     public boolean validateuserId(String userId){
+        logger.info(userId);
         return Pattern.compile(REGEX_PATTERN)
                 .matcher(userId)
                 .matches();
