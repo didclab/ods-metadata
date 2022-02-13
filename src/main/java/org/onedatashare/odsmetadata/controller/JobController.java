@@ -7,10 +7,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import javax.ws.rs.PathParam;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -35,16 +36,16 @@ public class JobController {
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public List <String> getUserJobIds(@RequestParam(value="userId") String userId){
-        ArrayList <String> userIdList = new ArrayList<>();
+    public ResponseEntity getUserJobIds(@RequestParam(value="userId") String userId){
+        ArrayList <Integer> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
-            logger.info(userId);
-            userIdList = (ArrayList<@Valid String>) queryingService.queryUserJobIds(userId);
+            userIdList = (ArrayList<@Valid Integer>) queryingService.queryUserJobIds(userId);
         }
-        else
-            logger.info("Invalid User Id"+userId);
-        return userIdList;
+        else{
+            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity(userIdList, HttpStatus.OK);
     }
 
     /**
@@ -53,15 +54,17 @@ public class JobController {
      * @return A list of all JobStatistics involving a user
      */
     @GetMapping("/all_stats")
-    public List<JobStatistics> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
+    public ResponseEntity getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
         List <JobStatistics> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
-            allJobStatsOfUser = (ArrayList<@Valid JobStatistics>) queryingService.queryGetAllJobStatisticsOfUser(userId);
+            allJobStatsOfUser =  queryingService.queryGetAllJobStatisticsOfUser(userId);
         }
-        else
-            logger.info("Invalid User Id"+userId);
-        return allJobStatsOfUser;
+        else{
+            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity(allJobStatsOfUser, HttpStatus.OK);
     }
 
     /**
@@ -70,14 +73,17 @@ public class JobController {
      * @return
      */
     @GetMapping("/stat")
-    public JobStatistics getJobStat(@RequestParam(value = "jobId") String jobId){
-        List <JobStatistics> anyJobStat = new ArrayList<>();
+    public ResponseEntity getJobStat(@RequestParam(value = "jobId") String jobId){
+        JobStatistics anyJobStat ;
         String regex = "\\d+";
-        boolean flag = jobId.matches(regex);
-        if(flag==true) {
-            anyJobStat = (ArrayList<@Valid JobStatistics>) queryingService.queryGetJobStat(jobId);
+        if(jobId.matches(regex)){
+            anyJobStat=queryingService.queryGetJobStat(jobId);
+        }else{
+            return new ResponseEntity(String.format("Invalid User Id: %s",jobId), HttpStatus.NOT_FOUND);
         }
-        return (JobStatistics) anyJobStat;
+
+        return new ResponseEntity(anyJobStat, HttpStatus.OK);
+
     }
 
     /**
@@ -86,18 +92,20 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date")
-    public List<JobStatistics> getUserJobsByDate(@RequestParam(value="userid") String userId, @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date date){
+    public ResponseEntity getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
+                                                 @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
         List <JobStatistics> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);
-        /*
-        to add validation for date
-         */
+
         if(validateuserId(userId)) {
-            userJobsBydate = (ArrayList<@Valid JobStatistics>) queryingService.queryGetUserJobsByDate(userId, date);
+            userJobsBydate = queryingService.queryGetUserJobsByDate(userId, date);
         }
-        else
-            logger.info("Invalid User Id"+userId);
-        return userJobsBydate;
+        else{
+            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity(userJobsBydate, HttpStatus.OK);
+
     }
 
     /**
@@ -107,23 +115,25 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date/range")
-    public List<JobStatistics> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
-                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date to,
-                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date from){
+    public ResponseEntity getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
+                                                      @RequestParam(value="from")
+                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date from,
+                                                      @RequestParam(value="to")
+                                                          @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date to){
 
-        List <JobStatistics> userJobsByDateRange = new ArrayList<>();
+        List <Integer> userJobsByDateRange = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
-            userJobsByDateRange = (ArrayList<@Valid JobStatistics>) queryingService
-                    .queryGetUserJobsByDateRange(userId, to, from);
+            userJobsByDateRange = queryingService.queryGetUserJobsByDateRange(userId, from, to);
         }
-        else
-            logger.info("Invalid User Id"+userId);
-        return (List<JobStatistics>) userJobsByDateRange;
+        else{
+            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity(userJobsByDateRange, HttpStatus.OK);
     }
 
     public boolean validateuserId(String userId){
-        logger.info(userId);
         return Pattern.compile(REGEX_PATTERN)
                 .matcher(userId)
                 .matches();

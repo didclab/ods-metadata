@@ -9,16 +9,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.onedatashare.odsmetadata.model.JobStatistics;
+import org.onedatashare.odsmetadata.model.Status;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.sql.ResultSet;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 /**
  * Unit Test class for QueryingService
@@ -41,12 +43,24 @@ public class QueryingServiceTest {
     public void queryUserJobIdsTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
-        List<String> userNames = new ArrayList<String>();
 
-        userNames.add("jacobgol@buffalo.edu");
+        List<Integer> jobIds = new ArrayList<>();
+        jobIds.add(172);
 
-        when(queryingService.queryUserJobIds("")).thenReturn(userNames);
-        Assert.assertEquals(queryingService.queryUserJobIds(""), userNames);
+        Mockito.when(queryingService.queryUserJobIds("abcd@test.com")).thenReturn(jobIds);
+        Assert.assertEquals(jobIds, queryingService.queryUserJobIds("abcd@test.com"));
+    }
+
+    /**
+     * Test for queryUserJobIdsTest when userId is null
+     */
+    @Test(expected=NullPointerException.class)
+    public void queryUserJobIdsNullTest() {
+        JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
+        ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
+
+        Mockito.when(queryingService.queryUserJobIds(null)).thenThrow(NullPointerException.class);
+        Assert.assertTrue(queryingService.queryUserJobIds(null) instanceof NullPointerException);
     }
 
     /**
@@ -56,31 +70,58 @@ public class QueryingServiceTest {
     public void queryGetAllJobStatisticsOfUserTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
-        List<String> userNames = new ArrayList<String>();
+        List<JobStatistics> listStats = new ArrayList<>();
 
-        userNames.add("jacobgol@buffalo.edu");
+        String date_string_start = "26-09-2021";
+        String date_string_end = "27-09-2021";
+        Date start_date;
+        Date end_date;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            start_date = formatter.parse(date_string_start);
+            end_date = formatter.parse(date_string_end);
+            JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+            listStats.add(stats);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         String QUERY_GETAllJOBSTATISTICSOFUSER ="select job_execution_id,start_time,end_time,status,last_updated from " +
                 "batch_job_execution where job_execution_id in (select job_execution_id from batch_job_execution_params " +
                 "where string_val = ?)";
 
-        when(jdbcTemplate.queryForObject(eq(QUERY_GETAllJOBSTATISTICSOFUSER),eq(List.class),eq("jacobgol@buffalo.edu"))).thenReturn(userNames);
-        when(queryingService.queryGetAllJobStatisticsOfUser("jacobgol@buffalo.edu")).thenReturn(userNames);
-        Assert.assertEquals(queryingService.queryGetAllJobStatisticsOfUser("jacobgol@buffalo.edu"), userNames);
+        Mockito.when(jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,(ResultSet rs, int rowNum) -> {
+
+            JobStatistics s = new JobStatistics(172, new Date(), new Date(), Status.completed,new Date());
+            List<JobStatistics> sList = new ArrayList<>();
+            sList.add (s);return sList;
+
+        },"jacobgol@buffalo.edu")).thenReturn(Collections.singletonList(listStats));
+        Mockito.when(queryingService.queryGetAllJobStatisticsOfUser("jacobgol@buffalo.edu")).thenReturn(listStats);
+        Assert.assertEquals(listStats, queryingService.queryGetAllJobStatisticsOfUser("jacobgol@buffalo.edu"));
     }
 
     /**
      * Test for queryGetJobStatTest
      */
     @Test
+    @SneakyThrows
     public void queryGetJobStatTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
 
-        List<Integer> jobIds = new ArrayList<Integer>();
-        jobIds.add(123);
+        String date_string_start = "26-09-2021";
+        String date_string_end = "27-09-2021";
+        Date start_date;
+        Date end_date;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
-        when(queryingService.queryGetJobStat("123")).thenReturn(jobIds);
-        Assert.assertEquals(queryingService.queryGetJobStat("123"), jobIds);
+        start_date = formatter.parse(date_string_start);
+        end_date = formatter.parse(date_string_end);
+        JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+
+        Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(stats);
+        Assert.assertEquals(stats, queryingService.queryGetJobStat("123"));
     }
 
     /**
@@ -91,42 +132,67 @@ public class QueryingServiceTest {
     public void queryGetUserJobsByDateTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
+        List<JobStatistics> statsList = new ArrayList<>();
 
-        List<String> userNames = new ArrayList<String>();
-        userNames.add("jacobgol@buffalo.edu");
+        String date_string_start = "26-09-2021";
+        String date_string_end = "27-09-2021";
+        Date start_date;
+        Date end_date;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
-        String dateInString = "2016-09-09 19:00:00";
-        SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD HH:MM:SS");
-        Date date = formatter.parse(dateInString);
+        start_date = formatter.parse(date_string_start);
+        end_date = formatter.parse(date_string_end);
+        JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+        statsList.add(stats);
 
-        when(queryingService.queryGetUserJobsByDate("jacobgol@buffalo.edu", date))
-                .thenReturn(userNames);
-        Assert.assertEquals(queryingService.queryGetUserJobsByDate("jacobgol@buffalo.edu", date)
-                , userNames);
+        final String QUERY_GETUSERJOBSBYDATE ="select job_execution_id,start_time,end_time,status,last_updated " +
+                "from batch_job_execution where job_execution_id in (select job_execution_id from batch_job_execution_params " +
+                "where string_val like ?) and start_time=?";
 
+        Mockito.when(jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(ResultSet rs, int rowNum) -> {
+
+            JobStatistics s = new JobStatistics(172, start_date, end_date, Status.completed,new Date());
+            List<JobStatistics> sList = new ArrayList<>();
+            sList.add (s);return sList;
+
+        },"jacobgol@buffalo.edu")).thenReturn(Collections.singletonList(statsList));
+
+        Mockito.when(queryingService.queryGetUserJobsByDate("jacobgol@buffalo.edu",start_date))
+                .thenReturn(statsList);
+
+        Assert.assertEquals(statsList, queryingService.queryGetUserJobsByDate("jacobgol@buffalo.edu",start_date));
     }
 
     /**
-     * Test for queryGetUserJobsByDateRangeTest
+     * Test to check successful behavior of queryGetUserJobsByDateRange
+     *
      */
     @SneakyThrows
     @Test
     public void queryGetUserJobsByDateRangeTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
-        List<String> userNames = new ArrayList<String>();
 
-        userNames.add("jacobgol@buffalo.edu");
-        String todateInString = "2016-09-09 19:00:00";
-        String fromdateInString = "2016-09-01 19:00:00";
-        SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD HH:MM:SS");
+        String date_string_start = "26-09-2021";
+        String date_string_end = "27-09-2021";
+        Date start_date;
+        Date end_date;
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
 
-        Date todate = formatter.parse(todateInString);
-        Date fromdate = formatter.parse(fromdateInString);
+        start_date = formatter.parse(date_string_start);
+        end_date = formatter.parse(date_string_end);
 
-        when(queryingService.queryGetUserJobsByDateRange("jacobgol@buffalo.edu",fromdate, todate))
-                .thenReturn(userNames);
-        Assert.assertEquals(queryingService.queryGetUserJobsByDateRange("jacobgol@buffalo.edu",fromdate, todate)
-                , userNames);
+        List<Integer> jobIds = new ArrayList<>();
+        jobIds.add(172);
+
+        final String QUERY_GETUSERJOBSBYDATERANGE = "select job_execution_id from batch_job_execution where job_execution_id " +
+                "in (select job_execution_id from batch_job_execution_params where string_val like ?) and start_time <=? " +
+                "and end_time >=?";
+
+
+        Mockito.when(jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE, Integer.class, start_date, end_date )).thenReturn(jobIds);
+        Mockito.when(queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date)).thenReturn(jobIds);
+        Assert.assertEquals(jobIds, queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date));
+
     }
 }
