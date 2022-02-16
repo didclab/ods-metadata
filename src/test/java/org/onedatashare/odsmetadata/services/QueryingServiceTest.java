@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -80,7 +81,8 @@ public class QueryingServiceTest {
         try {
             start_date = formatter.parse(date_string_start);
             end_date = formatter.parse(date_string_end);
-            JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+            JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+                    Status.completed, (Timestamp) end_date);
             listStats.add(stats);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -92,7 +94,8 @@ public class QueryingServiceTest {
 
         Mockito.when(jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,(ResultSet rs, int rowNum) -> {
 
-            JobStatistics s = new JobStatistics(172, new Date(), new Date(), Status.completed,new Date());
+            JobStatistics s = new JobStatistics(172, (Timestamp) new Date(), (Timestamp) new Date(),
+                    Status.completed,(Timestamp)new Date());
             List<JobStatistics> sList = new ArrayList<>();
             sList.add (s);return sList;
 
@@ -118,7 +121,8 @@ public class QueryingServiceTest {
 
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
-        JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+        JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+                Status.completed,(Timestamp)end_date);
 
         Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(stats);
         Assert.assertEquals(stats, queryingService.queryGetJobStat("123"));
@@ -142,16 +146,19 @@ public class QueryingServiceTest {
 
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
-        JobStatistics stats = new JobStatistics(172, start_date, end_date, Status.completed,end_date);
+        JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+                Status.completed,(Timestamp)end_date);
         statsList.add(stats);
 
         final String QUERY_GETUSERJOBSBYDATE ="select job_execution_id,start_time,end_time,status,last_updated " +
-                "from batch_job_execution where job_execution_id in (select job_execution_id from batch_job_execution_params " +
+                "from batch_job_execution where job_execution_id in (select job_execution_id from " +
+                "batch_job_execution_params " +
                 "where string_val like ?) and start_time=?";
 
         Mockito.when(jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(ResultSet rs, int rowNum) -> {
 
-            JobStatistics s = new JobStatistics(172, start_date, end_date, Status.completed,new Date());
+            JobStatistics s = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+                    Status.completed, (Timestamp) new Date());
             List<JobStatistics> sList = new ArrayList<>();
             sList.add (s);return sList;
 
@@ -185,14 +192,19 @@ public class QueryingServiceTest {
         List<Integer> jobIds = new ArrayList<>();
         jobIds.add(172);
 
-        final String QUERY_GETUSERJOBSBYDATERANGE = "select job_execution_id from batch_job_execution where job_execution_id " +
-                "in (select job_execution_id from batch_job_execution_params where string_val like ?) and start_time <=? " +
+        final String QUERY_GETUSERJOBSBYDATERANGE = "select job_execution_id from batch_job_execution " +
+                "where job_execution_id " +
+                "in (select job_execution_id from batch_job_execution_params where string_val like ?) " +
+                "and start_time <=? " +
                 "and end_time >=?";
 
 
-        Mockito.when(jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE, Integer.class, start_date, end_date )).thenReturn(jobIds);
-        Mockito.when(queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date)).thenReturn(jobIds);
-        Assert.assertEquals(jobIds, queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date));
+        Mockito.when(jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE, Integer.class, start_date, end_date ))
+                .thenReturn(jobIds);
+        Mockito.when(queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date))
+                .thenReturn(jobIds);
+        Assert.assertEquals(jobIds, queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date,
+                end_date));
 
     }
 }

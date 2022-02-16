@@ -37,6 +37,8 @@ public class QueryingService {
     public static final String STATUS = "status";
     public static final String LAST_UPDATED = "last_updated";
 
+
+
     private static final Logger logger = LoggerFactory.getLogger(QueryingService.class);
 
     /**
@@ -65,8 +67,8 @@ public class QueryingService {
 
         return this.jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,
                 (rs, rowNum) -> new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
-                        rs.getDate(START_TIME),rs.getDate(END_TIME),
-                        Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getDate(LAST_UPDATED)),userId);
+                        rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
+                        Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)),userId);
 
     }
 
@@ -80,8 +82,8 @@ public class QueryingService {
         try {
             return this.jdbcTemplate.queryForObject(QUERY_GETJOBSTAT,
                     (rs, rowNum) -> new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
-                            rs.getDate(START_TIME),rs.getDate(END_TIME),
-                            Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getDate(LAST_UPDATED)),
+                            rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
+                            Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)),
                     Integer.parseInt(jobId));
         }
         catch(IncorrectResultSizeDataAccessException ex) {
@@ -103,8 +105,8 @@ public class QueryingService {
     public List<JobStatistics> queryGetUserJobsByDate(@NotNull String userId, Date date) {
         return this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
                 new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
-                rs.getDate(START_TIME),rs.getDate(END_TIME),
-                Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getDate(LAST_UPDATED)),userId,date);
+                rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
+                Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)),userId,date);
     }
 
     /**
