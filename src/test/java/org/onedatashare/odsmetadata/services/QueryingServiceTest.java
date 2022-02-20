@@ -77,12 +77,14 @@ public class QueryingServiceTest {
         String date_string_end = "27-09-2021";
         Date start_date;
         Date end_date;
+        int read_count=2;
+        int write_count=2;
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         try {
             start_date = formatter.parse(date_string_start);
             end_date = formatter.parse(date_string_end);
             JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
-                    Status.completed, (Timestamp) end_date);
+                    Status.completed, (Timestamp) end_date,read_count,write_count);
             listStats.add(stats);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -95,7 +97,7 @@ public class QueryingServiceTest {
         Mockito.when(jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,(ResultSet rs, int rowNum) -> {
 
             JobStatistics s = new JobStatistics(172, (Timestamp) new Date(), (Timestamp) new Date(),
-                    Status.completed,(Timestamp)new Date());
+                    Status.completed,(Timestamp)new Date(),read_count,write_count);
             List<JobStatistics> sList = new ArrayList<>();
             sList.add (s);return sList;
 
@@ -118,11 +120,13 @@ public class QueryingServiceTest {
         Date start_date;
         Date end_date;
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        int read_count=2;
+        int write_count=2;
 
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
         JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
-                Status.completed,(Timestamp)end_date);
+                Status.completed,(Timestamp)end_date,read_count,write_count);
 
         Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(stats);
         Assert.assertEquals(stats, queryingService.queryGetJobStat("123"));
@@ -143,11 +147,13 @@ public class QueryingServiceTest {
         Date start_date;
         Date end_date;
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        int read_count=2;
+        int write_count=2;
 
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
         JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
-                Status.completed,(Timestamp)end_date);
+                Status.completed,(Timestamp)end_date,read_count,write_count);
         statsList.add(stats);
 
         final String QUERY_GETUSERJOBSBYDATE ="select job_execution_id,start_time,end_time,status,last_updated " +
@@ -158,7 +164,7 @@ public class QueryingServiceTest {
         Mockito.when(jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(ResultSet rs, int rowNum) -> {
 
             JobStatistics s = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
-                    Status.completed, (Timestamp) new Date());
+                    Status.completed, (Timestamp) new Date(),read_count,write_count);
             List<JobStatistics> sList = new ArrayList<>();
             sList.add (s);return sList;
 

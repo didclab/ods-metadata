@@ -17,5 +17,7 @@ public class JobStatistics {
     Timestamp endTime;
     Status status;
     Timestamp lastUpdated;
+    int readCount;
+    int writeCount;
 
 }
