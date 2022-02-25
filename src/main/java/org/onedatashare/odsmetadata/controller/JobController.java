@@ -39,6 +39,7 @@ public class JobController {
     public ResponseEntity getUserJobIds(@RequestParam(value="userId") String userId){
         ArrayList <Integer> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
+        logger.info(userId);
         if(validateuserId(userId)) {
             userIdList = (ArrayList<@Valid Integer>) queryingService.queryUserJobIds(userId);
         }
@@ -57,6 +58,7 @@ public class JobController {
     public ResponseEntity getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
         List <JobStatistics> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
+        logger.info(userId);
         if(validateuserId(userId)) {
             allJobStatsOfUser =  queryingService.queryGetAllJobStatisticsOfUser(userId);
         }
@@ -76,6 +78,7 @@ public class JobController {
     public ResponseEntity getJobStat(@RequestParam(value = "jobId") String jobId){
         JobStatistics anyJobStat ;
         String regex = "\\d+";
+        logger.info(jobId);
         if(jobId.matches(regex)){
             anyJobStat=queryingService.queryGetJobStat(jobId);
         }else{
@@ -96,7 +99,7 @@ public class JobController {
                                                  @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
         List <JobStatistics> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);
-
+        logger.info(userId);
         if(validateuserId(userId)) {
             userJobsBydate = queryingService.queryGetUserJobsByDate(userId, date);
         }
