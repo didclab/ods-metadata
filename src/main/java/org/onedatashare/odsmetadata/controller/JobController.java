@@ -1,42 +1,64 @@
 package org.onedatashare.odsmetadata.controller;
 
-import org.onedatashare.odsmetadata.model.JobStatistics;
+import com.google.common.base.Preconditions;
+import org.onedatashare.odsmetadata.model.JobStatistic;
+import org.onedatashare.odsmetadata.services.QueryingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * This controller allows a user to query jobs that they have submitted form CockroachDB
  */
 @RestController
-@RequestMapping("/api/v1/job")
+@RequestMapping(value="/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobController {
 
+    @Autowired
+    QueryingService queryingService;
+    private static final Logger logger = LoggerFactory.getLogger(JobController.class);
+    private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
+            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userId is an email
     /**
      * Returns all the jobs with the corresponding userId
      * This call should be done if you only want the JobIds
      * @param userId
      * @return List of jobIds
      */
-    @GetMapping("/{userId}")
-    public List<String> getUserJobIds(@PathVariable String userId){
-        return new ArrayList<>();
+    @GetMapping("/user_jobs")
+    public List<Integer> getUserJobIds(@RequestParam(value="userId") String userId){
+        ArrayList <Integer> userIdList = new ArrayList<>();
+        Preconditions.checkNotNull(userId);
+        logger.info(userId);
+        if(validateuserId(userId)) {
+            userIdList = (ArrayList<@Valid Integer>) queryingService.queryUserJobIds(userId);
+        }
+        return userIdList;
     }
 
     /**
      * This is a bulk API call so if the user wants all information on all their jobs this is the right call
      * @param userId
-     * @return A list of all JobStatistics involving a user
+     * @return A list of all JobStatistic involving a user
      */
-    @GetMapping("/stats/{userId}")
-    public List<JobStatistics> getAllJobStatisticsOfUser(@PathVariable String userId){
-        return new ArrayList<>();
+    @GetMapping("/all_stats")
+    public List<JobStatistic> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
+        List <JobStatistic> allJobStatsOfUser = new ArrayList<>();
+        Preconditions.checkNotNull(userId);
+        logger.info(userId);
+        if(validateuserId(userId)) {
+            allJobStatsOfUser =  queryingService.queryGetAllJobStatisticsOfUser(userId);
+        }
+        return allJobStatsOfUser;
     }
 
     /**
@@ -44,9 +66,15 @@ public class JobController {
      * @param jobId
      * @return
      */
-    @GetMapping("/stats/{jobId}")
-    public JobStatistics getJobStat(@PathVariable String jobId){
-        return new JobStatistics();
+    @GetMapping("/stat")
+    public JobStatistic getJobStat(@RequestParam(value = "jobId") String jobId){
+        JobStatistic anyJobStat = null;
+        String regex = "\\d+";
+        logger.info(jobId);
+        if(jobId.matches(regex)) {
+            anyJobStat = queryingService.queryGetJobStat(jobId);
+        }
+        return anyJobStat;
     }
 
     /**
@@ -54,9 +82,17 @@ public class JobController {
      * @param date
      * @return
      */
-    @GetMapping("/stats/{userId}/date")
-    public List<JobStatistics> getUserJobsByDate(@PathVariable String userId, @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date date){
-        return new ArrayList<>();
+    @GetMapping("/stats/date")
+    public List <JobStatistic> getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
+                                                 @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
+        List<JobStatistic> userJobsBydate = new ArrayList<>();
+        Preconditions.checkNotNull(userId);
+        logger.info(userId);
+        if(validateuserId(userId)) {
+            userJobsBydate = queryingService.queryGetUserJobsByDate(userId, date);
+        }
+        return userJobsBydate;
+
     }
 
     /**
@@ -65,10 +101,24 @@ public class JobController {
      * @param from
      * @return
      */
-    @GetMapping("/stats/{userId}/date/range")
-    public List<JobStatistics> getUserJobsByDateRange(@PathVariable String userId,
-                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date to,
-                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss") Date from){
-        return new ArrayList<>();
+    @GetMapping("/stats/date/range")
+    public List<Integer> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
+                                                      @RequestParam(value="from")
+                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date from,
+                                                      @RequestParam(value="to")
+                                                          @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date to){
+
+        List<Integer> userJobsByDateRange = new ArrayList<>();
+        Preconditions.checkNotNull(userId);
+        if(validateuserId(userId)) {
+            userJobsByDateRange = queryingService.queryGetUserJobsByDateRange(userId, from, to);
+        }
+        return userJobsByDateRange;
+    }
+
+    public boolean validateuserId(String userId){
+        return Pattern.compile(REGEX_PATTERN)
+                .matcher(userId)
+                .matches();
     }
 }
