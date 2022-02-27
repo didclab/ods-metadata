@@ -1,6 +1,6 @@
 package org.onedatashare.odsmetadata.services;
 
-import org.onedatashare.odsmetadata.model.JobStatistics;
+import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.model.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,10 +71,10 @@ public class QueryingService {
      * @param userId
      * @return
      */
-    public List<JobStatistics> queryGetAllJobStatisticsOfUser(@NotNull String userId){
+    public List<JobStatistic> queryGetAllJobStatisticsOfUser(@NotNull String userId){
 
         return this.jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,
-                (rs, rowNum) -> new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
+                (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                         rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                         Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
                         ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),userId);
@@ -87,10 +87,10 @@ public class QueryingService {
      * @return
      */
 
-    public JobStatistics queryGetJobStat(@NotNull String jobId) {
+    public JobStatistic queryGetJobStat(@NotNull String jobId) {
         try {
             return this.jdbcTemplate.queryForObject(QUERY_GETJOBSTAT,
-                    (rs, rowNum) -> new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
+                    (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                             rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                             Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
                             ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),
@@ -112,9 +112,9 @@ public class QueryingService {
      * @return
      */
 
-    public List<JobStatistics> queryGetUserJobsByDate(@NotNull String userId, Date date) {
+    public List<JobStatistic> queryGetUserJobsByDate(@NotNull String userId, Date date) {
         return this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
-                new JobStatistics(rs.getInt(JOB_EXECUTION_ID),
+                new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                 rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                 Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
                 ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),userId,date);

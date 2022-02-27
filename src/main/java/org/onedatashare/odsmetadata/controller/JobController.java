@@ -1,14 +1,13 @@
 package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
-import org.onedatashare.odsmetadata.model.JobStatistics;
+import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.services.QueryingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -21,7 +20,7 @@ import java.util.regex.Pattern;
  * This controller allows a user to query jobs that they have submitted form CockroachDB
  */
 @RestController
-@RequestMapping("/api/v1/meta")
+@RequestMapping(value="/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobController {
 
     @Autowired
@@ -36,37 +35,30 @@ public class JobController {
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public ResponseEntity getUserJobIds(@RequestParam(value="userId") String userId){
+    public List<Integer> getUserJobIds(@RequestParam(value="userId") String userId){
         ArrayList <Integer> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         logger.info(userId);
         if(validateuserId(userId)) {
             userIdList = (ArrayList<@Valid Integer>) queryingService.queryUserJobIds(userId);
         }
-        else{
-            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity(userIdList, HttpStatus.OK);
+        return userIdList;
     }
 
     /**
      * This is a bulk API call so if the user wants all information on all their jobs this is the right call
      * @param userId
-     * @return A list of all JobStatistics involving a user
+     * @return A list of all JobStatistic involving a user
      */
     @GetMapping("/all_stats")
-    public ResponseEntity getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
-        List <JobStatistics> allJobStatsOfUser = new ArrayList<>();
+    public List<JobStatistic> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
+        List <JobStatistic> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         logger.info(userId);
         if(validateuserId(userId)) {
             allJobStatsOfUser =  queryingService.queryGetAllJobStatisticsOfUser(userId);
         }
-        else{
-            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
-        }
-
-        return new ResponseEntity(allJobStatsOfUser, HttpStatus.OK);
+        return allJobStatsOfUser;
     }
 
     /**
@@ -75,18 +67,14 @@ public class JobController {
      * @return
      */
     @GetMapping("/stat")
-    public ResponseEntity getJobStat(@RequestParam(value = "jobId") String jobId){
-        JobStatistics anyJobStat ;
+    public JobStatistic getJobStat(@RequestParam(value = "jobId") String jobId){
+        JobStatistic anyJobStat = null;
         String regex = "\\d+";
         logger.info(jobId);
-        if(jobId.matches(regex)){
-            anyJobStat=queryingService.queryGetJobStat(jobId);
-        }else{
-            return new ResponseEntity(String.format("Invalid User Id: %s",jobId), HttpStatus.NOT_FOUND);
+        if(jobId.matches(regex)) {
+            anyJobStat = queryingService.queryGetJobStat(jobId);
         }
-
-        return new ResponseEntity(anyJobStat, HttpStatus.OK);
-
+        return anyJobStat;
     }
 
     /**
@@ -95,19 +83,15 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date")
-    public ResponseEntity getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
+    public List <JobStatistic> getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
                                                  @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
-        List <JobStatistics> userJobsBydate = new ArrayList<>();
+        List<JobStatistic> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         logger.info(userId);
         if(validateuserId(userId)) {
             userJobsBydate = queryingService.queryGetUserJobsByDate(userId, date);
         }
-        else{
-            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
-        }
-
-        return new ResponseEntity(userJobsBydate, HttpStatus.OK);
+        return userJobsBydate;
 
     }
 
@@ -118,22 +102,18 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date/range")
-    public ResponseEntity getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
+    public List<Integer> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
                                                       @RequestParam(value="from")
                                                       @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date from,
                                                       @RequestParam(value="to")
                                                           @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date to){
 
-        List <Integer> userJobsByDateRange = new ArrayList<>();
+        List<Integer> userJobsByDateRange = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         if(validateuserId(userId)) {
             userJobsByDateRange = queryingService.queryGetUserJobsByDateRange(userId, from, to);
         }
-        else{
-            return new ResponseEntity(String.format("Invalid User Id: %s",userId), HttpStatus.NOT_FOUND);
-        }
-
-        return new ResponseEntity(userJobsByDateRange, HttpStatus.OK);
+        return userJobsByDateRange;
     }
 
     public boolean validateuserId(String userId){
