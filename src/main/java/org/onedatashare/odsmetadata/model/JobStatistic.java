@@ -11,7 +11,7 @@ import java.sql.Timestamp;
  */
 @Data
 @AllArgsConstructor
-public class JobStatistics {
+public class JobStatistic {
     int jobId;
     Timestamp startTime;
     Timestamp endTime;

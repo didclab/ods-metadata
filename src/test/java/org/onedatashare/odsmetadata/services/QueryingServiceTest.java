@@ -9,7 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.onedatashare.odsmetadata.model.JobStatistics;
+import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.model.Status;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -71,7 +71,7 @@ public class QueryingServiceTest {
     public void queryGetAllJobStatisticsOfUserTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
-        List<JobStatistics> listStats = new ArrayList<>();
+        List<JobStatistic> listStats = new ArrayList<>();
 
         String date_string_start = "26-09-2021";
         String date_string_end = "27-09-2021";
@@ -85,7 +85,7 @@ public class QueryingServiceTest {
         try {
             start_date = formatter.parse(date_string_start);
             end_date = formatter.parse(date_string_end);
-            JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+            JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
                     Status.completed, (Timestamp) end_date,read_count,write_count,file_name,str_val);
             listStats.add(stats);
         } catch (ParseException e) {
@@ -98,9 +98,9 @@ public class QueryingServiceTest {
 
         Mockito.when(jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,(ResultSet rs, int rowNum) -> {
 
-            JobStatistics s = new JobStatistics(172, (Timestamp) new Date(), (Timestamp) new Date(),
+            JobStatistic s = new JobStatistic(172, (Timestamp) new Date(), (Timestamp) new Date(),
                     Status.completed,(Timestamp)new Date(),read_count,write_count,file_name,str_val);
-            List<JobStatistics> sList = new ArrayList<>();
+            List<JobStatistic> sList = new ArrayList<>();
             sList.add (s);return sList;
 
         },"jacobgol@buffalo.edu")).thenReturn(Collections.singletonList(listStats));
@@ -128,9 +128,9 @@ public class QueryingServiceTest {
         String str_val="adarshjaiswal2307@gmail.com\n" + "0\n" + "0\n"+ "\n"+ "output/\n"+ "ubuntu\n" + "18.116.240.2:22";
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
-        JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+        JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
                 Status.completed,(Timestamp)end_date,read_count,write_count,file_name,str_val);
-        List<JobStatistics> sList = new ArrayList<>();
+        List<JobStatistic> sList = new ArrayList<>();
         sList.add (stats);
 
         Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(sList);
@@ -145,7 +145,7 @@ public class QueryingServiceTest {
     public void queryGetUserJobsByDateTest() {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
-        List<JobStatistics> statsList = new ArrayList<>();
+        List<JobStatistic> statsList = new ArrayList<>();
 
         String date_string_start = "26-09-2021";
         String date_string_end = "27-09-2021";
@@ -158,7 +158,7 @@ public class QueryingServiceTest {
         String str_val="adarshjaiswal2307@gmail.com\n" + "0\n" + "0\n"+ "\n"+ "output/\n"+ "ubuntu\n" + "18.116.240.2:22";
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
-        JobStatistics stats = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+        JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
                 Status.completed,(Timestamp)end_date,read_count,write_count,file_name,str_val);
         statsList.add(stats);
 
@@ -169,9 +169,9 @@ public class QueryingServiceTest {
 
         Mockito.when(jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(ResultSet rs, int rowNum) -> {
 
-            JobStatistics s = new JobStatistics(172, (Timestamp) start_date, (Timestamp) end_date,
+            JobStatistic s = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
                     Status.completed, (Timestamp) new Date(),read_count,write_count,file_name,str_val);
-            List<JobStatistics> sList = new ArrayList<>();
+            List<JobStatistic> sList = new ArrayList<>();
             sList.add (s);return sList;
 
         },"jacobgol@buffalo.edu")).thenReturn(Collections.singletonList(statsList));
