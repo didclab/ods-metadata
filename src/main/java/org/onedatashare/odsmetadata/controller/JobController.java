@@ -77,11 +77,8 @@ public class JobController {
     public ResponseEntity getJobStat(@RequestParam(value = "jobId") String jobId){
         List<JobStatistics> anyJobStat ;
         String regex = "\\d+";
-        LOG.info("jobId "  + jobId);
         if(jobId.matches(regex)){
-            LOG.info("jobId matches"  + regex);
             anyJobStat=queryingService.queryGetJobStat(jobId);
-            LOG.info("Query result: "  + anyJobStat.size());
         }else{
             return new ResponseEntity(String.format("Invalid User Id: %s",jobId), HttpStatus.NOT_FOUND);
         }
