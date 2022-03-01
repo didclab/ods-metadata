@@ -19,5 +19,7 @@ public class JobStatistics {
     Timestamp lastUpdated;
     int readCount;
     int writeCount;
+    String fileName;
+    String strVal;
 
 }

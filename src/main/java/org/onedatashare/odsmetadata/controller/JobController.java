@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 @RequestMapping("/api/v1/meta")
 public class JobController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JobController.class);
     @Autowired
     QueryingService queryingService;
     private static final Logger logger = LoggerFactory.getLogger(JobController.class);
@@ -74,10 +75,13 @@ public class JobController {
      */
     @GetMapping("/stat")
     public ResponseEntity getJobStat(@RequestParam(value = "jobId") String jobId){
-        JobStatistics anyJobStat ;
+        List<JobStatistics> anyJobStat ;
         String regex = "\\d+";
+        LOG.info("jobId "  + jobId);
         if(jobId.matches(regex)){
+            LOG.info("jobId matches"  + regex);
             anyJobStat=queryingService.queryGetJobStat(jobId);
+            LOG.info("Query result: "  + anyJobStat.size());
         }else{
             return new ResponseEntity(String.format("Invalid User Id: %s",jobId), HttpStatus.NOT_FOUND);
         }
