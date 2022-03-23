@@ -21,17 +21,23 @@ public class QueryingService {
     private final String QUERY_GETUSERJOBIDS ="select a.job_execution_id from batch_job_execution_params a " +
             "where a.string_val like ?";
 
-    private final String QUERY_GETAllJOBSTATISTICSOFUSER ="select a.job_execution_id, a.start_time, a.end_time, a.status" +
-            ",a.last_updated, b.read_count, b.write_count from batch_job_execution a, batch_step_execution b " +
-            "where a.job_execution_id in (select job_execution_id from batch_job_execution_params where string_val like ?)";
+    private final String QUERY_GETAllJOBSTATISTICSOFUSER ="select a.job_execution_id, a.start_time, a.end_time, a.status, " +
+            "a.last_updated, b.read_count, b.write_count, c.string_val, b.step_name from batch_job_execution a, " +
+            "batch_step_execution b, batch_job_execution_params c where c.job_execution_id=a.job_execution_id and " +
+            "b.job_execution_id=a.job_execution_id and a.job_execution_id in (select job_execution_id from " +
+            "batch_job_execution_params where string_val like ?)";
 
     private final String QUERY_GETJOBSTAT =" select a.job_execution_id, a.start_time, a.end_time, a.status, " +
-            "a.last_updated, b.read_count, b.write_count from batch_job_execution a,batch_step_execution b " +
-            "where a.job_execution_id=b.job_execution_id and a.job_execution_id= ?";
+            "a.last_updated, b.read_count, b.write_count, c.string_val, b.step_name from batch_job_execution a, " +
+            "batch_step_execution b, batch_job_execution_params c where c.job_execution_id in " +
+            "(select job_execution_id from batch_job_execution where job_execution_id=?) and b.job_execution_id in " +
+            "(select job_execution_id from batch_job_execution where job_execution_id=?) and a.job_execution_id= ?";
 
     private final String QUERY_GETUSERJOBSBYDATE ="select a.job_execution_id,a.start_time,a.end_time, a.status" +
-            ",a.last_updated,b.read_count,b.write_count from batch_job_execution a,batch_step_execution b  " +
-            "where a.job_execution_id in (select job_execution_id from batch_job_execution_params " +
+            ",a.last_updated,b.read_count,b.write_count,b.step_name,c.string_val from batch_job_execution a" +
+            ",batch_step_execution b,batch_job_execution_params c  " +
+            "where c.job_execution_id=a.job_execution_id and a.job_execution_id=b.job_execution_id and " +
+            "a.job_execution_id in (select job_execution_id from batch_job_execution_params " +
             "where string_val like ?) and a.start_time=?";
 
     private final String QUERY_GETUSERJOBSBYDATERANGE ="select a.job_execution_id from batch_job_execution a " +
@@ -45,6 +51,10 @@ public class QueryingService {
     public static final String LAST_UPDATED = "last_updated";
     public static final String READ_COUNT = "read_count";
     public static final String WRITE_COUNT = "write_count";
+    public static final String FILE_NAME = "step_name";
+    public static final String STR_VAL = "string_val";
+
+
 
 
     private static final Logger logger = LoggerFactory.getLogger(QueryingService.class);
@@ -77,7 +87,7 @@ public class QueryingService {
                 (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                         rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                         Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),userId);
+                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId);
 
     }
 
@@ -86,15 +96,15 @@ public class QueryingService {
      * @param jobId
      * @return
      */
-
-    public JobStatistic queryGetJobStat(@NotNull String jobId) {
+    public List<JobStatistic> queryGetJobStat(@NotNull String jobId) {
         try {
-            return this.jdbcTemplate.queryForObject(QUERY_GETJOBSTAT,
+            System.out.println("Inside here");
+            return this.jdbcTemplate.query(QUERY_GETJOBSTAT,
                     (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                             rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                             Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                            ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),
-                    Integer.parseInt(jobId));
+                            ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),
+                    Integer.parseInt(jobId),Integer.parseInt(jobId),Integer.parseInt(jobId));
         }
         catch(IncorrectResultSizeDataAccessException ex) {
             if(logger.isDebugEnabled()) {
@@ -117,7 +127,7 @@ public class QueryingService {
                 new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                 rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                 Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT)),userId,date);
+                ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
     }
 
     /**

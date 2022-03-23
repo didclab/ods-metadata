@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,6 +24,7 @@ import java.util.regex.Pattern;
 @RequestMapping(value="/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobController {
 
+    private static final Logger LOG = LoggerFactory.getLogger(JobController.class);
     @Autowired
     QueryingService queryingService;
     private static final Logger logger = LoggerFactory.getLogger(JobController.class);
@@ -67,8 +69,8 @@ public class JobController {
      * @return
      */
     @GetMapping("/stat")
-    public JobStatistic getJobStat(@RequestParam(value = "jobId") String jobId){
-        JobStatistic anyJobStat = null;
+    public List<JobStatistic> getJobStat(@RequestParam(value = "jobId") String jobId){
+        List<JobStatistic> anyJobStat = Collections.emptyList();
         String regex = "\\d+";
         logger.info(jobId);
         if(jobId.matches(regex)) {

@@ -79,12 +79,14 @@ public class QueryingServiceTest {
         Date end_date;
         int read_count=2;
         int write_count=2;
+        String file_name="go1.16beta1.darwin-amd64.tar";
+        String str_val="adarshjaiswal2307@gmail.com\n" + "0\n" + "0\n"+ "\n"+ "output/\n"+ "ubuntu\n" + "18.116.240.2:22";
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         try {
             start_date = formatter.parse(date_string_start);
             end_date = formatter.parse(date_string_end);
             JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
-                    Status.completed, (Timestamp) end_date,read_count,write_count);
+                    Status.completed, (Timestamp) end_date,read_count,write_count,file_name,str_val);
             listStats.add(stats);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -97,7 +99,7 @@ public class QueryingServiceTest {
         Mockito.when(jdbcTemplate.query(QUERY_GETAllJOBSTATISTICSOFUSER,(ResultSet rs, int rowNum) -> {
 
             JobStatistic s = new JobStatistic(172, (Timestamp) new Date(), (Timestamp) new Date(),
-                    Status.completed,(Timestamp)new Date(),read_count,write_count);
+                    Status.completed,(Timestamp)new Date(),read_count,write_count,file_name,str_val);
             List<JobStatistic> sList = new ArrayList<>();
             sList.add (s);return sList;
 
@@ -122,13 +124,16 @@ public class QueryingServiceTest {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         int read_count=2;
         int write_count=2;
-
+        String file_name="go1.16beta1.darwin-amd64.tar";
+        String str_val="adarshjaiswal2307@gmail.com\n" + "0\n" + "0\n"+ "\n"+ "output/\n"+ "ubuntu\n" + "18.116.240.2:22";
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
         JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
-                Status.completed,(Timestamp)end_date,read_count,write_count);
+                Status.completed,(Timestamp)end_date,read_count,write_count,file_name,str_val);
+        List<JobStatistic> sList = new ArrayList<>();
+        sList.add (stats);
 
-        Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(stats);
+        Mockito.when(queryingService.queryGetJobStat("123")).thenReturn(sList);
         Assert.assertEquals(stats, queryingService.queryGetJobStat("123"));
     }
 
@@ -149,11 +154,12 @@ public class QueryingServiceTest {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
         int read_count=2;
         int write_count=2;
-
+        String file_name="go1.16beta1.darwin-amd64.tar";
+        String str_val="adarshjaiswal2307@gmail.com\n" + "0\n" + "0\n"+ "\n"+ "output/\n"+ "ubuntu\n" + "18.116.240.2:22";
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
         JobStatistic stats = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
-                Status.completed,(Timestamp)end_date,read_count,write_count);
+                Status.completed,(Timestamp)end_date,read_count,write_count,file_name,str_val);
         statsList.add(stats);
 
         final String QUERY_GETUSERJOBSBYDATE ="select job_execution_id,start_time,end_time,status,last_updated " +
@@ -164,7 +170,7 @@ public class QueryingServiceTest {
         Mockito.when(jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(ResultSet rs, int rowNum) -> {
 
             JobStatistic s = new JobStatistic(172, (Timestamp) start_date, (Timestamp) end_date,
-                    Status.completed, (Timestamp) new Date(),read_count,write_count);
+                    Status.completed, (Timestamp) new Date(),read_count,write_count,file_name,str_val);
             List<JobStatistic> sList = new ArrayList<>();
             sList.add (s);return sList;
 
