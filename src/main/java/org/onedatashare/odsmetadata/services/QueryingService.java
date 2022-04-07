@@ -1,5 +1,6 @@
 package org.onedatashare.odsmetadata.services;
 
+import org.onedatashare.odsmetadata.model.JobParamDetails;
 import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.model.Status;
 import org.slf4j.Logger;
@@ -11,8 +12,10 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 @Repository
 public class QueryingService {
@@ -53,8 +56,6 @@ public class QueryingService {
     public static final String WRITE_COUNT = "write_count";
     public static final String FILE_NAME = "step_name";
     public static final String STR_VAL = "string_val";
-
-
 
 
     private static final Logger logger = LoggerFactory.getLogger(QueryingService.class);
@@ -98,7 +99,6 @@ public class QueryingService {
      */
     public List<JobStatistic> queryGetJobStat(@NotNull String jobId) {
         try {
-            System.out.println("Inside here");
             return this.jdbcTemplate.query(QUERY_GETJOBSTAT,
                     (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                             rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
@@ -123,11 +123,18 @@ public class QueryingService {
      */
 
     public List<JobStatistic> queryGetUserJobsByDate(@NotNull String userId, Date date) {
-        return this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
+        List<JobStatistic> list = new ArrayList<>();
+
+        HashMap<Integer, List<JobStatistic>> map = new HashMap<>();
+
+
+        list = this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
                 new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                 rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                 Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
                 ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
+
+        return list;
     }
 
     /**
@@ -141,4 +148,90 @@ public class QueryingService {
     public List<Integer> queryGetUserJobsByDateRange(@NotNull String userId, Date to, Date from) {
         return this.jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE,Integer.class,userId,from,to);
     }
+
+    public List<List<String>> mapStringVal(List<JobStatistic> allJobStatsOfUser) {
+        Map<Integer, List<String>> allStringVal = allJobStatsOfUser
+                .stream()
+                .collect(Collectors.groupingBy(a -> a.getJobId(),Collectors.mapping(m -> m.getStrVal(), toList())));
+
+        List<String> str= new ArrayList<>();
+
+        for (JobStatistic i : allJobStatsOfUser) {
+            String temp = i.getStrVal();
+            str.add(temp);
+        }
+
+        JobParamDetails jobParamDetails = mapStrVal(str);
+        logger.info("117 printing added values to list"+jobParamDetails.toString());
+        return allStringVal.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList());
+
+    }
+
+    public JobParamDetails mapStrVal(List<String> strList) {
+        JobParamDetails jobParamDetails = new JobParamDetails();
+        for (int i = 0; i < strList.size(); i++) {
+            jobParamDetails.setTime(strList.get(0));
+            jobParamDetails.setOwnerId(strList.get(1));
+            jobParamDetails.setPriority(strList.get(2));
+            jobParamDetails.setChunkSize(strList.get(3));
+            jobParamDetails.setSourcePath(strList.get(4));
+            jobParamDetails.setDestPath(strList.get(5));
+            jobParamDetails.setSourceCreds(strList.get(6));
+            jobParamDetails.setDestCreds(strList.get(7));
+            jobParamDetails.setCompress(strList.get(8));
+            jobParamDetails.setConcurrency(strList.get(9));
+            jobParamDetails.setPipelining(strList.get(10));
+            jobParamDetails.setParallelism(strList.get(11));
+            jobParamDetails.setRetry(strList.get(12));
+            jobParamDetails.setFileDetails(strList.get(13));
+
+        }
+        if (jobParamDetails.getTime().isEmpty()){
+            jobParamDetails.setTime("00:00:00");
+        }
+        if(jobParamDetails.getOwnerId().isEmpty()){
+            jobParamDetails.setOwnerId("Onedatashare");
+        }
+        if(jobParamDetails.getPriority().isEmpty()){
+            jobParamDetails.setPriority("1");
+        }
+        if(jobParamDetails.getChunkSize().isEmpty()){
+            jobParamDetails.setChunkSize("1");
+        }
+        if(jobParamDetails.getConcurrency().isEmpty() || jobParamDetails.getConcurrency().contains(",")){
+            jobParamDetails.setConcurrency("0");
+        }
+        if(jobParamDetails.getSourcePath().isEmpty()){
+            jobParamDetails.setSourcePath("/Onedatashare");
+        }
+        if(jobParamDetails.getDestPath().isEmpty()){
+            jobParamDetails.setDestPath("/Owner");
+        }
+        if(jobParamDetails.getSourceCreds().isEmpty()){
+            jobParamDetails.setSourceCreds("Source");
+        }
+        if(jobParamDetails.getDestCreds().isEmpty()){
+            jobParamDetails.setDestCreds("Destination");
+        }
+        if(jobParamDetails.getCompress().isEmpty() || jobParamDetails.getCompress().contains(",")){
+            jobParamDetails.setCompress("0");
+        }
+        if(jobParamDetails.getPipelining().isEmpty() || jobParamDetails.getPipelining().contains(",")){
+            jobParamDetails.setPipelining("0");
+        }
+        if(jobParamDetails.getParallelism().isEmpty() || jobParamDetails.getParallelism().contains(",")){
+            jobParamDetails.setParallelism("0");
+        }
+        if(jobParamDetails.getRetry().isEmpty() || jobParamDetails.getRetry().contains(",")){
+            jobParamDetails.setRetry("0");
+        }
+        if(jobParamDetails.getFileDetails().isEmpty() || jobParamDetails.getFileDetails().contains(" ,")){
+            jobParamDetails.setFileDetails("Ondateshare File");
+        }
+
+
+        return  jobParamDetails;
+    }
+
+
 }
