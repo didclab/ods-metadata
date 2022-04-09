@@ -169,7 +169,6 @@ public class QueryingService {
         }
 
         JobParamDetails jobParamDetails = mapStrVal(str);
-        logger.info("117 printing added values to list"+jobParamDetails.toString());
         return allStringVal.entrySet().stream().map(v -> v.getValue()).collect(Collectors.toList());
 
     }
