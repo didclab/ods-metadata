@@ -2,6 +2,7 @@ package org.onedatashare.odsmetadata.services;
 
 import org.onedatashare.odsmetadata.model.JobParamDetails;
 import org.onedatashare.odsmetadata.model.JobStatistic;
+import org.onedatashare.odsmetadata.model.JobStatisticDto;
 import org.onedatashare.odsmetadata.model.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,15 +48,15 @@ public class QueryingService {
             "where a.job_execution_id in (select job_execution_id from batch_job_execution_params where " +
             "string_val like ?) and a.start_time <=? and a.end_time >=?";
 
-    public static final String START_TIME = "start_time";
-    public static final String END_TIME = "end_time";
-    public static final String JOB_EXECUTION_ID = "job_execution_id";
-    public static final String STATUS = "status";
-    public static final String LAST_UPDATED = "last_updated";
-    public static final String READ_COUNT = "read_count";
-    public static final String WRITE_COUNT = "write_count";
-    public static final String FILE_NAME = "step_name";
-    public static final String STR_VAL = "string_val";
+    private static final String START_TIME = "start_time";
+    private static final String END_TIME = "end_time";
+    private static final String JOB_EXECUTION_ID = "job_execution_id";
+    private static final String STATUS = "status";
+    private static final String LAST_UPDATED = "last_updated";
+    private static final String READ_COUNT = "read_count";
+    private static final String WRITE_COUNT = "write_count";
+    private static final String FILE_NAME = "step_name";
+    private static final String STR_VAL = "string_val";
 
 
     private static final Logger logger = LoggerFactory.getLogger(QueryingService.class);
@@ -149,14 +150,20 @@ public class QueryingService {
         return this.jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE,Integer.class,userId,from,to);
     }
 
-    public List<List<String>> mapStringVal(List<JobStatistic> allJobStatsOfUser) {
-        Map<Integer, List<String>> allStringVal = allJobStatsOfUser
+    /**
+     * Maps the list of JobStatistic to List<List<String>>
+     *
+     * @param jobStatisticList
+     * @return
+     */
+    public List<List<String>> mapStringVal(List<JobStatistic> jobStatisticList) {
+        Map<Integer, List<String>> allStringVal = jobStatisticList
                 .stream()
                 .collect(Collectors.groupingBy(a -> a.getJobId(),Collectors.mapping(m -> m.getStrVal(), toList())));
 
         List<String> str= new ArrayList<>();
 
-        for (JobStatistic i : allJobStatsOfUser) {
+        for (JobStatistic i : jobStatisticList) {
             String temp = i.getStrVal();
             str.add(temp);
         }
@@ -167,7 +174,17 @@ public class QueryingService {
 
     }
 
+    /**
+     * Converts a  list of string strlist to JobParamDetails
+     *
+     * @param strList
+     * @return
+     */
+
     public JobParamDetails mapStrVal(List<String> strList) {
+        if(strList.isEmpty()){
+            return null;
+        }
         JobParamDetails jobParamDetails = new JobParamDetails();
         for (int i = 0; i < strList.size(); i++) {
             jobParamDetails.setTime(strList.get(0));
@@ -186,51 +203,90 @@ public class QueryingService {
             jobParamDetails.setFileDetails(strList.get(13));
 
         }
-        if (jobParamDetails.getTime().isEmpty()){
+        if (checkNull(jobParamDetails.getTime())){
             jobParamDetails.setTime("00:00:00");
         }
-        if(jobParamDetails.getOwnerId().isEmpty()){
+        if(checkNull(jobParamDetails.getOwnerId())){
             jobParamDetails.setOwnerId("Onedatashare");
         }
-        if(jobParamDetails.getPriority().isEmpty()){
+        if(checkNull(jobParamDetails.getPriority())){
             jobParamDetails.setPriority("1");
         }
-        if(jobParamDetails.getChunkSize().isEmpty()){
+        if(checkNull(jobParamDetails.getChunkSize().isEmpty())){
             jobParamDetails.setChunkSize("1");
         }
-        if(jobParamDetails.getConcurrency().isEmpty() || jobParamDetails.getConcurrency().contains(",")){
+        if(!checkNull(jobParamDetails.getConcurrency()) && jobParamDetails.getConcurrency().contains(",")
+                || checkNull(jobParamDetails.getConcurrency())){
             jobParamDetails.setConcurrency("0");
         }
-        if(jobParamDetails.getSourcePath().isEmpty()){
+        if(checkNull(jobParamDetails.getSourcePath())){
             jobParamDetails.setSourcePath("/Onedatashare");
         }
-        if(jobParamDetails.getDestPath().isEmpty()){
+        if(checkNull(jobParamDetails.getDestPath())){
             jobParamDetails.setDestPath("/Owner");
         }
-        if(jobParamDetails.getSourceCreds().isEmpty()){
+        if(checkNull(jobParamDetails.getSourceCreds())){
             jobParamDetails.setSourceCreds("Source");
         }
-        if(jobParamDetails.getDestCreds().isEmpty()){
+        if(checkNull(jobParamDetails.getDestCreds())){
             jobParamDetails.setDestCreds("Destination");
         }
-        if(jobParamDetails.getCompress().isEmpty() || jobParamDetails.getCompress().contains(",")){
+        if(checkNull(jobParamDetails.getCompress()) || !checkNull(jobParamDetails.getCompress()) &&
+                jobParamDetails.getCompress().contains(",")){
             jobParamDetails.setCompress("0");
         }
-        if(jobParamDetails.getPipelining().isEmpty() || jobParamDetails.getPipelining().contains(",")){
+        if(checkNull(jobParamDetails.getPipelining()) || !checkNull(jobParamDetails.getPipelining()) &&
+                jobParamDetails.getPipelining().contains(",")){
             jobParamDetails.setPipelining("0");
         }
-        if(jobParamDetails.getParallelism().isEmpty() || jobParamDetails.getParallelism().contains(",")){
+        if(checkNull(jobParamDetails.getParallelism()) && !checkNull(jobParamDetails.getParallelism()) &&
+                jobParamDetails.getParallelism().contains(",")){
             jobParamDetails.setParallelism("0");
         }
-        if(jobParamDetails.getRetry().isEmpty() || jobParamDetails.getRetry().contains(",")){
+        if(checkNull(jobParamDetails.getRetry()) || !checkNull(jobParamDetails.getRetry())  &&
+                jobParamDetails.getRetry().contains(",")){
             jobParamDetails.setRetry("0");
         }
-        if(jobParamDetails.getFileDetails().isEmpty() || jobParamDetails.getFileDetails().contains(" ,")){
+        if(checkNull(jobParamDetails.getFileDetails()) || !checkNull(jobParamDetails.getFileDetails()) &&
+                jobParamDetails.getFileDetails().contains(" ,")){
             jobParamDetails.setFileDetails("Ondateshare File");
         }
 
 
         return  jobParamDetails;
+    }
+
+    /**
+     * Converts list of Jobstatistic object to list of JobStatisticDto object
+     *
+     * @param anyJobStat
+     * @return
+     */
+
+    public List<JobStatisticDto> getJobStatisticDtos(List<JobStatistic> anyJobStat) {
+        List<String> strList = mapStringVal(anyJobStat)
+                .stream()
+                .flatMap( l ->  l.stream()).collect(Collectors.toList());
+
+        JobParamDetails jobParamDetails = mapStrVal(strList);
+        if(jobParamDetails ==null){
+            return Collections.emptyList();
+        }
+
+        JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(0).getJobId(),
+                anyJobStat.get(0).getStartTime(), anyJobStat.get(0).getEndTime(),
+                anyJobStat.get(0).getStatus(), anyJobStat.get(0).getLastUpdated(),
+                anyJobStat.get(0).getReadCount(), anyJobStat.get(0).getWriteCount(),
+                anyJobStat.get(0).getFileName(), jobParamDetails);
+
+        String res= String.valueOf(strList);
+        List<JobStatisticDto> list = new ArrayList<>();
+        anyJobStat.get(0).setStrVal(res);
+        return Arrays.asList(jobStatisticDto);
+    }
+
+    private static boolean checkNull(Object obj){
+       return  obj ==null || obj =="" ?true:false;
     }
 
 
