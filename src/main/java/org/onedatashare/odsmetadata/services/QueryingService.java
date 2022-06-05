@@ -131,9 +131,9 @@ public class QueryingService {
 
         list = this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
                 new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
-                rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
-                Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
+                        rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
+                        Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
+                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
 
         return list;
     }
@@ -271,21 +271,40 @@ public class QueryingService {
         if(jobParamDetails ==null){
             return Collections.emptyList();
         }
+        List<JobStatisticDto> list = new ArrayList<>();
+        List<JobStatisticDto> resultList = new ArrayList<>();
 
-        JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(0).getJobId(),
-                anyJobStat.get(0).getStartTime(), anyJobStat.get(0).getEndTime(),
-                anyJobStat.get(0).getStatus(), anyJobStat.get(0).getLastUpdated(),
-                anyJobStat.get(0).getReadCount(), anyJobStat.get(0).getWriteCount(),
-                anyJobStat.get(0).getFileName(), jobParamDetails);
+
+
+        for(int i=0;i< anyJobStat.size();i++){
+            JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(i).getJobId(),
+                    anyJobStat.get(i).getStartTime(), anyJobStat.get(i).getEndTime(),
+                    anyJobStat.get(i).getStatus(), anyJobStat.get(i).getLastUpdated(),
+                    anyJobStat.get(i).getReadCount(), anyJobStat.get(i).getWriteCount(),
+                    anyJobStat.get(i).getFileName(), jobParamDetails);
+
+
+            if(list.isEmpty()){
+                list.add(jobStatisticDto);
+            }else if(!list.contains(jobStatisticDto)){
+                list.add(jobStatisticDto);
+            }
+
+
+
+            }
+
+
+
+
 
         String res= String.valueOf(strList);
-        List<JobStatisticDto> list = new ArrayList<>();
         anyJobStat.get(0).setStrVal(res);
-        return Arrays.asList(jobStatisticDto);
+        return list;
     }
 
     private static boolean checkNull(Object obj){
-       return  obj ==null || obj =="" ?true:false;
+        return  obj ==null || obj =="" ?true:false;
     }
 
 
