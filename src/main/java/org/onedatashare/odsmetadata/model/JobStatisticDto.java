@@ -13,8 +13,8 @@ public class JobStatisticDto {
     Timestamp endTime;
     Status status;
     Timestamp lastUpdated;
-    int readCount;
-    int writeCount;
+    String readCount;
+    String writeCount;
     String fileName;
     JobParamDetails strVal;
 }

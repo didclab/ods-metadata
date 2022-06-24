@@ -15,10 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -60,7 +57,7 @@ public class JobController {
      * @return A list of all JobStatistic involving a user
      */
     @GetMapping("/all_stats")
-    public List<JobStatisticDto> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
+    public Set<JobStatisticDto> getAllJobStatisticsOfUser(@RequestParam(value="userId") String userId){
         List <JobStatistic> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         logger.info(userId);
@@ -77,7 +74,7 @@ public class JobController {
      * @return
      */
     @GetMapping("/stat")
-    public List<JobStatisticDto> getJobStat(@RequestParam(value = "jobId") String jobId){
+    public Set<JobStatisticDto> getJobStat(@RequestParam(value = "jobId") String jobId){
         List<JobStatistic> anyJobStat = Collections.emptyList();
         logger.info(jobId);
         if(jobId.matches(REGEX)) {
@@ -92,7 +89,7 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date")
-    public List<JobStatisticDto> getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
+    public Set<JobStatisticDto> getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
                                                  @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
         List<JobStatistic> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);

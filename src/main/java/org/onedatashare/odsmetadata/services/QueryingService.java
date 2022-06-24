@@ -262,45 +262,42 @@ public class QueryingService {
      * @return
      */
 
-    public List<JobStatisticDto> getJobStatisticDtos(List<JobStatistic> anyJobStat) {
+    public Set<JobStatisticDto> getJobStatisticDtos(List<JobStatistic> anyJobStat) {
         List<String> strList = mapStringVal(anyJobStat)
                 .stream()
                 .flatMap( l ->  l.stream()).collect(Collectors.toList());
 
         JobParamDetails jobParamDetails = mapStrVal(strList);
         if(jobParamDetails ==null){
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
-        List<JobStatisticDto> list = new ArrayList<>();
+        Set<JobStatisticDto> fileSet = new HashSet<>();
+
         List<JobStatisticDto> resultList = new ArrayList<>();
 
 
-
         for(int i=0;i< anyJobStat.size();i++){
+            int currJobId = anyJobStat.get(i).getJobId();
+            Set<String> fileNamesByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getFileName()).collect(Collectors.toSet());
+            Set<Integer> readCountByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getReadCount()).collect(Collectors.toSet());
+            Set<Integer> writeCountByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getWriteCount()).collect(Collectors.toSet());
+
             JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(i).getJobId(),
                     anyJobStat.get(i).getStartTime(), anyJobStat.get(i).getEndTime(),
                     anyJobStat.get(i).getStatus(), anyJobStat.get(i).getLastUpdated(),
-                    anyJobStat.get(i).getReadCount(), anyJobStat.get(i).getWriteCount(),
-                    anyJobStat.get(i).getFileName(), jobParamDetails);
+                    readCountByJobId.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                    writeCountByJobId.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                    String.join(", ", fileNamesByJobId), jobParamDetails);
 
-
-            if(list.isEmpty()){
-                list.add(jobStatisticDto);
-            }else if(!list.contains(jobStatisticDto)){
-                list.add(jobStatisticDto);
-            }
-
-
-
-            }
-
-
-
-
+            fileSet.add(jobStatisticDto);
+        }
 
         String res= String.valueOf(strList);
         anyJobStat.get(0).setStrVal(res);
-        return list;
+        return fileSet;
     }
 
     private static boolean checkNull(Object obj){
