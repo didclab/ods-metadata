@@ -90,7 +90,7 @@ public class JobController {
      */
     @GetMapping("/stats/date")
     public Set<JobStatisticDto> getUserJobsByDate(@RequestParam(value="userId") String userId, @RequestParam(value="date")
-                                                 @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
+    @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date date){
         List<JobStatistic> userJobsBydate = new ArrayList<>();
         Preconditions.checkNotNull(userId);
         logger.info(userId);
@@ -109,10 +109,10 @@ public class JobController {
      */
     @GetMapping("/stats/date/range")
     public List<Integer> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
-                                                      @RequestParam(value="from")
-                                                      @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date from,
-                                                      @RequestParam(value="to")
-                                                          @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date to){
+                                                @RequestParam(value="from")
+                                                @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date from,
+                                                @RequestParam(value="to")
+                                                @DateTimeFormat(pattern="yyyy-MM-dd'T'HH:mm:ss.SSS") Date to){
 
         List<Integer> userJobsByDateRange = new ArrayList<>();
         Preconditions.checkNotNull(userId);

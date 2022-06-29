@@ -194,12 +194,14 @@ public class QueryingService {
             jobParamDetails.setDestPath(strList.get(5));
             jobParamDetails.setSourceCreds(strList.get(6));
             jobParamDetails.setDestCreds(strList.get(7));
-            jobParamDetails.setCompress(strList.get(8));
-            jobParamDetails.setConcurrency(strList.get(9));
-            jobParamDetails.setPipelining(strList.get(10));
-            jobParamDetails.setParallelism(strList.get(11));
-            jobParamDetails.setRetry(strList.get(12));
-            jobParamDetails.setFileDetails(strList.get(13));
+            jobParamDetails.setSourceType(strList.get(8));
+            jobParamDetails.setDestType(strList.get(9));
+            jobParamDetails.setCompress(strList.get(10));
+            jobParamDetails.setConcurrency(strList.get(11));
+            jobParamDetails.setPipelining(strList.get(12));
+            jobParamDetails.setParallelism(strList.get(13));
+            jobParamDetails.setRetry(strList.get(14));
+            jobParamDetails.setFileDetails(strList.get(15));
 
         }
         if (checkNull(jobParamDetails.getTime())){
@@ -229,6 +231,12 @@ public class QueryingService {
         }
         if(checkNull(jobParamDetails.getDestCreds())){
             jobParamDetails.setDestCreds("Destination");
+        }
+        if(checkNull(jobParamDetails.getSourceType())){
+            jobParamDetails.setDestCreds("SourceType");
+        }
+        if(checkNull(jobParamDetails.getDestType())){
+            jobParamDetails.setDestCreds("DestinationType");
         }
         if(checkNull(jobParamDetails.getCompress()) || !checkNull(jobParamDetails.getCompress()) &&
                 jobParamDetails.getCompress().contains(",")){
@@ -288,8 +296,7 @@ public class QueryingService {
             JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(i).getJobId(),
                     anyJobStat.get(i).getStartTime(), anyJobStat.get(i).getEndTime(),
                     anyJobStat.get(i).getStatus(), anyJobStat.get(i).getLastUpdated(),
-                    readCountByJobId.stream().map(String::valueOf).collect(Collectors.joining(",")),
-                    writeCountByJobId.stream().map(String::valueOf).collect(Collectors.joining(",")),
+                    readCountByJobId, writeCountByJobId,
                     String.join(", ", fileNamesByJobId), jobParamDetails);
 
             fileSet.add(jobStatisticDto);

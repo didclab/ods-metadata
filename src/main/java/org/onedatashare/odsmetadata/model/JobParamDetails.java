@@ -15,6 +15,8 @@ public class JobParamDetails {
     String destPath;
     String sourceCreds;
     String destCreds;
+    String sourceType;
+    String destType;
     String compress;
     String concurrency;
     String pipelining;
