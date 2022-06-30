@@ -131,9 +131,9 @@ public class QueryingService {
 
         list = this.jdbcTemplate.query(QUERY_GETUSERJOBSBYDATE,(rs, rowNum) ->
                 new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
-                rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
-                Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
+                        rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
+                        Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
+                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(FILE_NAME),rs.getString(STR_VAL)),userId,date);
 
         return list;
     }
@@ -194,12 +194,14 @@ public class QueryingService {
             jobParamDetails.setDestPath(strList.get(5));
             jobParamDetails.setSourceCreds(strList.get(6));
             jobParamDetails.setDestCreds(strList.get(7));
-            jobParamDetails.setCompress(strList.get(8));
-            jobParamDetails.setConcurrency(strList.get(9));
-            jobParamDetails.setPipelining(strList.get(10));
-            jobParamDetails.setParallelism(strList.get(11));
-            jobParamDetails.setRetry(strList.get(12));
-            jobParamDetails.setFileDetails(strList.get(13));
+            jobParamDetails.setSourceType(strList.get(8));
+            jobParamDetails.setDestType(strList.get(9));
+            jobParamDetails.setCompress(strList.get(10));
+            jobParamDetails.setConcurrency(strList.get(11));
+            jobParamDetails.setPipelining(strList.get(12));
+            jobParamDetails.setParallelism(strList.get(13));
+            jobParamDetails.setRetry(strList.get(14));
+            jobParamDetails.setFileDetails(strList.get(15));
 
         }
         if (checkNull(jobParamDetails.getTime())){
@@ -229,6 +231,12 @@ public class QueryingService {
         }
         if(checkNull(jobParamDetails.getDestCreds())){
             jobParamDetails.setDestCreds("Destination");
+        }
+        if(checkNull(jobParamDetails.getSourceType())){
+            jobParamDetails.setDestCreds("SourceType");
+        }
+        if(checkNull(jobParamDetails.getDestType())){
+            jobParamDetails.setDestCreds("DestinationType");
         }
         if(checkNull(jobParamDetails.getCompress()) || !checkNull(jobParamDetails.getCompress()) &&
                 jobParamDetails.getCompress().contains(",")){
@@ -262,30 +270,45 @@ public class QueryingService {
      * @return
      */
 
-    public List<JobStatisticDto> getJobStatisticDtos(List<JobStatistic> anyJobStat) {
+    public Set<JobStatisticDto> getJobStatisticDtos(List<JobStatistic> anyJobStat) {
         List<String> strList = mapStringVal(anyJobStat)
                 .stream()
                 .flatMap( l ->  l.stream()).collect(Collectors.toList());
 
         JobParamDetails jobParamDetails = mapStrVal(strList);
         if(jobParamDetails ==null){
-            return Collections.emptyList();
+            return Collections.emptySet();
+        }
+        Set<JobStatisticDto> fileSet = new HashSet<>();
+
+        List<JobStatisticDto> resultList = new ArrayList<>();
+
+
+        for(int i=0;i< anyJobStat.size();i++){
+            int currJobId = anyJobStat.get(i).getJobId();
+            Set<String> fileNamesByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getFileName()).collect(Collectors.toSet());
+            Set<Integer> readCountByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getReadCount()).collect(Collectors.toSet());
+            Set<Integer> writeCountByJobId = anyJobStat.stream().
+                    filter(job -> job.getJobId()==currJobId).map(f -> f.getWriteCount()).collect(Collectors.toSet());
+
+            JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(i).getJobId(),
+                    anyJobStat.get(i).getStartTime(), anyJobStat.get(i).getEndTime(),
+                    anyJobStat.get(i).getStatus(), anyJobStat.get(i).getLastUpdated(),
+                    readCountByJobId, writeCountByJobId,
+                    String.join(", ", fileNamesByJobId), jobParamDetails);
+
+            fileSet.add(jobStatisticDto);
         }
 
-        JobStatisticDto jobStatisticDto = new JobStatisticDto(anyJobStat.get(0).getJobId(),
-                anyJobStat.get(0).getStartTime(), anyJobStat.get(0).getEndTime(),
-                anyJobStat.get(0).getStatus(), anyJobStat.get(0).getLastUpdated(),
-                anyJobStat.get(0).getReadCount(), anyJobStat.get(0).getWriteCount(),
-                anyJobStat.get(0).getFileName(), jobParamDetails);
-
         String res= String.valueOf(strList);
-        List<JobStatisticDto> list = new ArrayList<>();
         anyJobStat.get(0).setStrVal(res);
-        return Arrays.asList(jobStatisticDto);
+        return fileSet;
     }
 
     private static boolean checkNull(Object obj){
-       return  obj ==null || obj =="" ?true:false;
+        return  obj ==null || obj =="" ?true:false;
     }
 
 

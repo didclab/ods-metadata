@@ -22,4 +22,8 @@ public class JobStatistic {
     String fileName;
     String strVal;
 
+
+    public JobStatistic() {
+
+    }
 }
