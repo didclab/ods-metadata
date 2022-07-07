@@ -297,7 +297,7 @@ public class QueryingService {
                     anyJobStat.get(i).getStartTime(), anyJobStat.get(i).getEndTime(),
                     anyJobStat.get(i).getStatus(), anyJobStat.get(i).getLastUpdated(),
                     readCountByJobId, writeCountByJobId,
-                    String.join(", ", fileNamesByJobId), jobParamDetails);
+                    Collections.singleton(String.join(", ", fileNamesByJobId)), jobParamDetails);
 
             fileSet.add(jobStatisticDto);
         }

@@ -16,6 +16,6 @@ public class JobStatisticDto {
     Timestamp lastUpdated;
     Set<Integer> readCount;
     Set<Integer> writeCount;
-    String fileName;
+    Set<String> fileName;
     JobParamDetails strVal;
 }
