@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.sql.Timestamp;
+import java.util.Map;
 import java.util.Set;
 
 @Data
@@ -16,6 +17,6 @@ public class JobStatisticDto {
     Timestamp lastUpdated;
     Set<Integer> readCount;
     Set<Integer> writeCount;
-    Set<String> fileName;
-    JobParamDetails strVal;
+//    List<String> fileName;
+    Map<String,String> strVal;
 }

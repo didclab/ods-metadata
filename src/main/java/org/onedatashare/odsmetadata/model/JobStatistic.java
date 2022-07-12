@@ -21,6 +21,8 @@ public class JobStatistic {
     Timestamp lastUpdated;
     int readCount;
     int writeCount;
-    String fileName;
+    //String fileName;
+    String keyVal;
     String strVal;
+    String long_val;
 }
