@@ -23,7 +23,7 @@ public class QueryingService {
             "where a.string_val like ?";
 
     private final String QUERY_GETAllJOBSTATISTICSOFUSER ="select a.job_execution_id, a.start_time, a.end_time, a.status, " +
-            "a.last_updated, b.read_count, b.write_count,c.key_name, c.string_val, b.step_name from batch_job_execution a, " +
+            "a.last_updated, b.read_count, b.write_count,c.key_name, c.string_val, c.long_val from batch_job_execution a, " +
             "batch_step_execution b, batch_job_execution_params c where c.job_execution_id=a.job_execution_id and " +
             "b.job_execution_id=a.job_execution_id and a.job_execution_id in (select job_execution_id from " +
             "batch_job_execution_params where string_val like ?)";
