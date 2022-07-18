@@ -2,9 +2,11 @@ package org.onedatashare.odsmetadata.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class JobParamDetails {
 
     String time;
@@ -23,9 +25,5 @@ public class JobParamDetails {
     String parallelism;
     String retry;
     String fileDetails;
-
-
-    public JobParamDetails() {
-
-    }
+    
 }

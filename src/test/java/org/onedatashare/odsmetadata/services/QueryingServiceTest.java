@@ -45,8 +45,8 @@ public class QueryingServiceTest {
         JdbcTemplate jdbcTemplate = Mockito.mock(JdbcTemplate.class);
         ReflectionTestUtils.setField(queryingService, "jdbcTemplate", jdbcTemplate);
 
-        List<Integer> jobIds = new ArrayList<>();
-        jobIds.add(172);
+        List<Long> jobIds = new ArrayList<>();
+        jobIds.add(172L);
 
         Mockito.when(queryingService.queryUserJobIds("abcd@test.com")).thenReturn(jobIds);
         Assert.assertEquals(jobIds, queryingService.queryUserJobIds("abcd@test.com"));
@@ -201,8 +201,8 @@ public class QueryingServiceTest {
         start_date = formatter.parse(date_string_start);
         end_date = formatter.parse(date_string_end);
 
-        List<Integer> jobIds = new ArrayList<>();
-        jobIds.add(172);
+        List<Long> jobIds = new ArrayList<>();
+        jobIds.add(172L);
 
         final String QUERY_GETUSERJOBSBYDATERANGE = "select job_execution_id from batch_job_execution " +
                 "where job_execution_id " +
@@ -211,7 +211,7 @@ public class QueryingServiceTest {
                 "and end_time >=?";
 
 
-        Mockito.when(jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE, Integer.class, start_date, end_date ))
+        Mockito.when(jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE, Long.class, start_date, end_date ))
                 .thenReturn(jobIds);
         Mockito.when(queryingService.queryGetUserJobsByDateRange("abcd@test.com", start_date, end_date))
                 .thenReturn(jobIds);

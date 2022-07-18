@@ -3,7 +3,6 @@ package org.onedatashare.odsmetadata.config;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.InfluxDBClientOptions;
-import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,9 +19,6 @@ public class InfluxConfig {
     @Value("${influxdb.org}")
     private String org;
 
-    @Value("${spring.application.name}")
-    String appName;
-
     @Bean
     public InfluxDBClient influxClient() {
         InfluxDBClientOptions influxDBClientOptions = InfluxDBClientOptions.builder()
@@ -30,6 +26,8 @@ public class InfluxConfig {
                 .org(this.org)
                 .authenticateToken(this.token.toCharArray())
                 .build();
-        return InfluxDBClientFactory.create(influxDBClientOptions);
+        InfluxDBClient client = InfluxDBClientFactory.create(influxDBClientOptions);
+//        client.enableGzip();
+        return client;
     }
 }
