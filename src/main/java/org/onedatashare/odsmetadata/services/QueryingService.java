@@ -23,20 +23,20 @@ public class QueryingService {
             "where a.string_val like ?";
 
     private final String QUERY_GETAllJOBSTATISTICSOFUSER ="select a.job_execution_id, a.start_time, a.end_time, a.status, " +
-            "a.last_updated, b.read_count, b.write_count,c.key_name, c.string_val, c.long_val from batch_job_execution a, " +
+            "a.last_updated, b.read_count, b.write_count,c.type_cd,c.key_name, c.string_val, c.long_val from batch_job_execution a, " +
             "batch_step_execution b, batch_job_execution_params c where c.job_execution_id=a.job_execution_id and " +
             "b.job_execution_id=a.job_execution_id and a.job_execution_id in (select job_execution_id from " +
             "batch_job_execution_params where string_val like ?)";
 
     private final String QUERY_GETJOBSTAT =" select c.job_execution_id, a.start_time, a.end_time, a.status, " +
-            "a.last_updated, b.read_count, b.write_count,c.key_name, c.string_val, c.long_val from " +
+            "a.last_updated, b.read_count, b.write_count,c.type_cd,c.key_name, c.string_val, c.long_val from " +
             "batch_job_execution a, batch_step_execution b, batch_job_execution_params c where c.job_execution_id = ?  " +
             "and c.job_execution_id=a.job_execution_id and c.job_execution_id = b.job_execution_id and " +
             "a.job_execution_id = b.job_execution_id and b.step_execution_id in " +
             "(select min(step_execution_id) from batch_step_execution where job_execution_id = ? )";
 
     private final String QUERY_GETUSERJOBSBYDATE ="select a.job_execution_id,a.start_time,a.end_time, a.status" +
-            ",a.last_updated,b.read_count,b.write_count,b.step_name,c.key_name, c.string_val from batch_job_execution a" +
+            ",a.last_updated,b.read_count,b.write_count,c.type_cd,c.key_name, c.string_val from batch_job_execution a" +
             ",batch_step_execution b,batch_job_execution_params c  " +
             "where c.job_execution_id=a.job_execution_id and a.job_execution_id=b.job_execution_id and " +
             "a.job_execution_id in (select job_execution_id from batch_job_execution_params " +
@@ -53,6 +53,7 @@ public class QueryingService {
     private static final String LAST_UPDATED = "last_updated";
     private static final String READ_COUNT = "read_count";
     private static final String WRITE_COUNT = "write_count";
+    private static final String TYP_CD = "type_cd";
     private static final String KEY_NAME = "key_name";
     private static final String STR_VAL = "string_val";
     private static final String LONG_VAL = "long_val";
@@ -88,7 +89,7 @@ public class QueryingService {
                 (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                         rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                         Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(KEY_NAME),
+                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(TYP_CD),rs.getString(KEY_NAME),
                         rs.getString(STR_VAL),rs.getString(LONG_VAL)),userId);
 
     }
@@ -104,7 +105,7 @@ public class QueryingService {
                     (rs, rowNum) -> new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                             rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                             Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                            ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(KEY_NAME),
+                            ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(TYP_CD),rs.getString(KEY_NAME),
                             rs.getString(STR_VAL),rs.getString(LONG_VAL)),
                     Integer.parseInt(jobId), Integer.parseInt(jobId));
         }
@@ -134,7 +135,7 @@ public class QueryingService {
                 new JobStatistic(rs.getInt(JOB_EXECUTION_ID),
                         rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                         Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
-                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(KEY_NAME),
+                        ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(TYP_CD),rs.getString(KEY_NAME),
                         rs.getString(STR_VAL),rs.getString(LONG_VAL)),userId,date);
 
         return list;
@@ -163,8 +164,15 @@ public class QueryingService {
         Map<String, String> allStringVal = new HashMap<>();
 
         for(JobStatistic jobStatistic: jobStatisticList ){
-            allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getStrVal());
-            allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getLong_val());
+            logger.info("type_cd: "+jobStatistic.getType_cd());
+            if(jobStatistic.getType_cd().equals("LONG")){
+                logger.info("step 169 if ");
+                allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getLong_val());
+            }
+            else if(jobStatistic.getType_cd().equals("STRING")){
+                logger.info("step 173 else-if ");
+                allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getStrVal());
+            }
         }
         logger.info("strval changes 166: "+allStringVal);
         return allStringVal;
