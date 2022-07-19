@@ -2,6 +2,7 @@ package org.onedatashare.odsmetadata.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.sql.Timestamp;
 
@@ -11,6 +12,7 @@ import java.sql.Timestamp;
  */
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class JobStatistic {
     int jobId;
     Timestamp startTime;
@@ -19,11 +21,8 @@ public class JobStatistic {
     Timestamp lastUpdated;
     int readCount;
     int writeCount;
-    String fileName;
+    String type_cd;
+    String keyVal;
     String strVal;
-
-
-    public JobStatistic() {
-
-    }
+    String long_val;
 }
