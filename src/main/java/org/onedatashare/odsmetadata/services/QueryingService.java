@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import javax.validation.constraints.NotNull;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -125,9 +126,9 @@ public class QueryingService {
      * @return
      */
 
-    public List<JobStatistic> queryGetUserJobsByDate(@NotNull String userId, Date date) {
+    public List<JobStatistic> queryGetUserJobsByDate(@NotNull String userId, Instant date) {
         List<JobStatistic> list = new ArrayList<>();
-
+        Date d = Date.from(date);
         HashMap<Integer, List<JobStatistic>> map = new HashMap<>();
 
 
@@ -136,7 +137,7 @@ public class QueryingService {
                         rs.getTimestamp(START_TIME),rs.getTimestamp(END_TIME),
                         Status.valueOf(rs.getString(STATUS).toLowerCase()),rs.getTimestamp(LAST_UPDATED)
                         ,rs.getInt(READ_COUNT),rs.getInt(WRITE_COUNT),rs.getString(TYP_CD),rs.getString(KEY_NAME),
-                        rs.getString(STR_VAL),rs.getString(LONG_VAL)),userId,date);
+                        rs.getString(STR_VAL),rs.getString(LONG_VAL)),userId,d);
 
         return list;
     }
@@ -149,8 +150,10 @@ public class QueryingService {
      * @return
      */
 
-    public List<Integer> queryGetUserJobsByDateRange(@NotNull String userId, Date to, Date from) {
-        return this.jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE,Integer.class,userId,from,to);
+    public List<Integer> queryGetUserJobsByDateRange(@NotNull String userId, Instant to, Instant from) {
+        Date t = Date.from(to);
+        Date f = Date.from(from);
+        return this.jdbcTemplate.queryForList(QUERY_GETUSERJOBSBYDATERANGE,Integer.class,userId,t,f);
     }
 
     /**

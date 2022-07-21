@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JobStatistic {
-    int jobId;
+    int jobId; //this should be a long
     Timestamp startTime;
     Timestamp endTime;
     Status status;
@@ -25,4 +25,8 @@ public class JobStatistic {
     String keyVal;
     String strVal;
     String long_val;
+    // here we want a list of of the values from the batch_step_exeuction table
+    //we also want a map that will hold the jobParams
+    //remove read and write count as they r just wrong
+    //also remove the keyVal,strVal and long val as those r somehow the JobParams.
 }
