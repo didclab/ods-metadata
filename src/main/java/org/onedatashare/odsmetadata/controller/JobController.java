@@ -1,7 +1,6 @@
 package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
-import org.onedatashare.odsmetadata.model.BadEmailException;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.model.JobStatisticDto;
@@ -143,20 +142,16 @@ public class JobController {
     }
 
     @GetMapping("/stats/influx/job")
-    public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId) throws BadEmailException {
-        if (!validateUserEmail(userEmail)) {
-            throw new BadEmailException();
-        }
+    public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId)  {
+        logger.info(userEmail);
+        logger.info(jobId.toString());
         List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
         data.addAll(influxIOService.getUserJobVfsBucketData(jobId, userEmail));
         return data;
     }
 
     @GetMapping("/stats/influx/user")
-    public List<InfluxData> getAllUserJobs(@RequestParam String userEmail) throws BadEmailException {
-        if (!validateUserEmail(userEmail)) {
-            throw new BadEmailException();
-        }
+    public List<InfluxData> getAllUserJobs(@RequestParam String userEmail) {
         List<InfluxData> data = influxIOService.getAllUserGlobalData(userEmail);
         data.addAll(influxIOService.getAllUserVfsData(userEmail));
         return data;
@@ -165,20 +160,14 @@ public class JobController {
     @GetMapping("/stats/influx/job/range")
     public List<InfluxData> getMeasurementsByDateRange(@RequestParam String userEmail,
                                                        @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-                                                       @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) throws BadEmailException {
-        if (!validateUserEmail(userEmail)) {
-            throw new BadEmailException();
-        }
+                                                       @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
         List<InfluxData> data = influxIOService.vfsMeasurementsByDates(start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC), userEmail);
         data.addAll(influxIOService.globalMeasurementsByDates(start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC), userEmail));
         return data;
     }
 
     @GetMapping("/stats/influx/job/date")
-    public List<InfluxData> getMeasurementsByDate(@RequestParam String userEmail, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) throws BadEmailException {
-        if (!validateUserEmail(userEmail)) {
-            throw new BadEmailException();
-        }
+    public List<InfluxData> getMeasurementsByDate(@RequestParam String userEmail, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
         List<InfluxData> data = influxIOService.jobsByDateGlobalBucket(start.toInstant(ZoneOffset.UTC), userEmail);
         data.addAll(influxIOService.jobsByDateVfsBucket(start.toInstant(ZoneOffset.UTC), userEmail));
         return data;
