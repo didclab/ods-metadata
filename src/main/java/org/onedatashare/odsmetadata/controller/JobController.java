@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
  * This controller allows a user to query jobs that they have submitted form CockroachDB
  */
 @RestController
-@RequestMapping(value = "/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v2/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class JobController {
 
     private static final Logger logger = LoggerFactory.getLogger(JobController.class);
