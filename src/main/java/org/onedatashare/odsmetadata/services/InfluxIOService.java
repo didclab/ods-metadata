@@ -5,11 +5,11 @@ import com.influxdb.client.QueryApi;
 import com.influxdb.client.domain.OnboardingRequest;
 import com.influxdb.client.domain.OnboardingResponse;
 import com.influxdb.exceptions.UnprocessableEntityException;
-import com.influxdb.query.FluxTable;
 import com.influxdb.query.dsl.Flux;
-import com.influxdb.query.dsl.functions.restriction.ColumnRestriction;
 import com.influxdb.query.dsl.functions.restriction.Restrictions;
 import org.onedatashare.odsmetadata.model.InfluxData;
+import org.onedatashare.odsmetadata.model.JobStatistic;
+import org.onedatashare.odsmetadata.model.CdbInfluxData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +19,9 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class InfluxIOService {
@@ -29,6 +30,10 @@ public class InfluxIOService {
 
     @Autowired
     private InfluxDBClient influxDBClient;
+
+    @Autowired
+    QueryingService queryingService;
+
 
     private final String ODS_USER = "ods_user";
     private final String ODS_JOB_ID = "jobId";
@@ -43,6 +48,7 @@ public class InfluxIOService {
 
     @Value("influxdb.measurement")
     private String measurement;
+
 
     /**
      * Load all of a users data that ran through AWS
@@ -101,9 +107,9 @@ public class InfluxIOService {
                 .range(-1L, ChronoUnit.CENTURIES)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
                 .pivot()
-                    .withRowKey(new String[]{"_time"})
-                    .withColumnKey(new String[]{"_field"})
-                    .withValueColumn("_value")
+                .withRowKey(new String[]{"_time"})
+                .withColumnKey(new String[]{"_field"})
+                .withValueColumn("_value")
                 .expression(String.format(f, jobId));
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("Global Job {}: size {}", jobId, data.size());
@@ -139,6 +145,7 @@ public class InfluxIOService {
         logger.info("VFS Jobs start:{} end:{}: size {}", start, end, data.size());
         return data;
     }
+
     public List<InfluxData> vfsMeasurementsByDates(Instant start, Instant end, String userEmail) {
         if (this.influxDBClient.getBucketsApi().findBucketByName(userEmail) == null) {
             return new ArrayList<>();
@@ -199,5 +206,42 @@ public class InfluxIOService {
         } catch (UnprocessableEntityException e) {
             logger.error("We already created this user {}", onboardingRequest.getUsername());
         }
+    }
+
+    public List<CdbInfluxData> monitorPublicBucketJobs(String userEmail, Instant startTime, List<Long> jobIds) {
+        String f = "filter(fn: (r) => r.jobId == %s)";
+        QueryApi queryApi = this.influxDBClient.getQueryApi();
+        return jobIds.parallelStream().map(jobId -> {
+            Flux fluxQuery = Flux.from(defaultBucket)
+                    .range(startTime)
+                    .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userEmail)))
+                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
+                    .expression(String.format(f, jobId));
+
+            List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
+            JobStatistic jobStatistic = queryingService.queryGetJobStat(String.valueOf(jobId)).get(0);
+            CdbInfluxData cdbInfluxData = new CdbInfluxData();
+            cdbInfluxData.setJobStatistic(jobStatistic);
+            cdbInfluxData.setMeasurements(data);
+            return cdbInfluxData;
+        }).collect(Collectors.toList());
+    }
+
+    public List<CdbInfluxData> monitorPrivateBucketJobs(String userEmail, Instant startTime, List<Long> jobIds) {
+        String f = "filter(fn: (r) => r.jobId == %s)";
+        logger.info(userEmail, startTime, jobIds.toString());
+        QueryApi queryApi = this.influxDBClient.getQueryApi();
+        return jobIds.parallelStream().map(jobId -> {
+            Flux fluxQuery = Flux.from(userEmail)
+                    .range(startTime)
+                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
+                    .expression(String.format(f, jobId));
+            List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
+            CdbInfluxData cdbInfluxData = new CdbInfluxData();
+            cdbInfluxData.setMeasurements(data);
+            JobStatistic jobStatistic = queryingService.queryGetJobStat(String.valueOf(jobId)).get(0);
+            cdbInfluxData.setJobStatistic(jobStatistic);
+            return cdbInfluxData;
+        }).collect(Collectors.toList());
     }
 }

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.JobStatistic;
 import org.onedatashare.odsmetadata.model.JobStatisticDto;
+import org.onedatashare.odsmetadata.model.CdbInfluxData;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.QueryingService;
 import org.slf4j.Logger;
@@ -170,6 +171,14 @@ public class JobController {
     public List<InfluxData> getMeasurementsByDate(@RequestParam String userEmail, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
         List<InfluxData> data = influxIOService.jobsByDateGlobalBucket(start.toInstant(ZoneOffset.UTC), userEmail);
         data.addAll(influxIOService.jobsByDateVfsBucket(start.toInstant(ZoneOffset.UTC), userEmail));
+        return data;
+    }
+
+    @GetMapping("/stats/influx/monitor")
+    public List<CdbInfluxData> monitorJobs(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start, @RequestParam List<Long> jobIds){
+        List<CdbInfluxData> data = influxIOService.monitorPublicBucketJobs(userEmail, start.toInstant(ZoneOffset.UTC), jobIds);
+        List<CdbInfluxData> data2 = influxIOService.monitorPrivateBucketJobs(userEmail, start.toInstant(ZoneOffset.UTC), jobIds);
+        data.addAll(data2);
         return data;
     }
 
