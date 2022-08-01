@@ -3,6 +3,8 @@ package org.onedatashare.odsmetadata.controller;
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
+import org.onedatashare.odsmetadata.model.InfluxData;
+import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -12,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -26,6 +30,9 @@ import java.util.regex.Pattern;
 public class BatchJobController {
     @Autowired
     JobService jobService;
+
+    @Autowired
+    InfluxIOService influxIOService;
 
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userId is an email
@@ -112,6 +119,37 @@ public class BatchJobController {
     }
 
 
+    @GetMapping("/stats/influx/job")
+    public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId)  {
+        log.info(userEmail);
+        log.info(jobId.toString());
+        List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
+        data.addAll(influxIOService.getUserJobVfsBucketData(jobId, userEmail));
+        return data;
+    }
+
+    @GetMapping("/stats/influx/user")
+    public List<InfluxData> getAllUserJobs(@RequestParam String userEmail) {
+        List<InfluxData> data = influxIOService.getAllUserGlobalData(userEmail);
+        data.addAll(influxIOService.getAllUserVfsData(userEmail));
+        return data;
+    }
+
+    @GetMapping("/stats/influx/job/range")
+    public List<InfluxData> getMeasurementsByDateRange(@RequestParam String userEmail,
+                                                       @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+                                                       @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        List<InfluxData> data = influxIOService.vfsMeasurementsByDates(start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC), userEmail);
+        data.addAll(influxIOService.globalMeasurementsByDates(start.toInstant(ZoneOffset.UTC), end.toInstant(ZoneOffset.UTC), userEmail));
+        return data;
+    }
+
+    @GetMapping("/stats/influx/job/date")
+    public List<InfluxData> getMeasurementsByDate(@RequestParam String userEmail, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
+        List<InfluxData> data = influxIOService.jobsByDateGlobalBucket(start.toInstant(ZoneOffset.UTC), userEmail);
+        data.addAll(influxIOService.jobsByDateVfsBucket(start.toInstant(ZoneOffset.UTC), userEmail));
+        return data;
+    }
 
     private boolean validateuserId(String userId){
         return Pattern.compile(REGEX_PATTERN)
