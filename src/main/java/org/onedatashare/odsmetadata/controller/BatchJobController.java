@@ -1,13 +1,11 @@
 package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
+import lombok.extern.slf4j.Slf4j;
+import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
-import org.onedatashare.odsmetadata.model.JobStatistic;
-import org.onedatashare.odsmetadata.model.JobStatisticDto;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
-import org.onedatashare.odsmetadata.services.QueryingService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
@@ -16,50 +14,44 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * This controller allows a user to query jobs that they have submitted form CockroachDB
+ * This controller allows a user to query jobs that they have submitted from CockroachDB
  */
+@Slf4j
 @RestController
-@RequestMapping(value = "/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
-public class JobController {
-
-    private static final Logger logger = LoggerFactory.getLogger(JobController.class);
-
+@RequestMapping(value="/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
+public class BatchJobController {
     @Autowired
-    QueryingService queryingService;
+    JobService jobService;
 
     @Autowired
     InfluxIOService influxIOService;
 
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userId is an email
-    private static final String REGEX = "\\d+";
 
+    private static final String REGEX = "\\d+";
 
     /**
      * Returns all the jobs with the corresponding userId
      * This call should be done if you only want the JobIds
-     * This should also return Longs and not Integers as jobIds' are longs not ints
      *
      * @param userId
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public List<Integer> getUserJobIds(@RequestParam String userId) {
-        ArrayList<Integer> userIdList = new ArrayList<>();
+    public List<Long> getUserJobIds(@RequestParam String userId){
+        List<Long> userIdList = new ArrayList<>();
         Preconditions.checkNotNull(userId);
-        logger.info(userId);
-        if (validateUserEmail(userId)) {
-            userIdList = (ArrayList<@Valid Integer>) queryingService.queryUserJobIds(userId);
+        log.info(userId);
+        if(validateUserEmail(userId)) {
+            userIdList = jobService.getUserJobIds(userId);
         }
         return userIdList;
     }
@@ -71,14 +63,14 @@ public class JobController {
      * @return A list of all JobStatistic involving a user
      */
     @GetMapping("/all_stats")
-    public Set<JobStatisticDto> getAllJobStatisticsOfUser(@RequestParam String userId) {
-        List<JobStatistic> allJobStatsOfUser = new ArrayList<>();
+    public List<BatchJobData> getAllJobStatisticsOfUser(@RequestParam String userId){
+        List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userId);
-        logger.info(userId);
-        if (validateUserEmail(userId)) {
-            allJobStatsOfUser = queryingService.queryGetAllJobStatisticsOfUser(userId);
+        log.info(userId);
+        if(validateUserEmail(userId)) {
+            allJobStatsOfUser =  jobService.getAllJobStatisticsOfUser(userId);
         }
-        return queryingService.getJobStatisticDtos(allJobStatsOfUser);
+        return allJobStatsOfUser;
 
     }
 
@@ -89,14 +81,15 @@ public class JobController {
      * @return
      */
     @GetMapping("/stat")
-    public Set<JobStatisticDto> getJobStat(@RequestParam String jobId) {
-        List<JobStatistic> anyJobStat = Collections.emptyList();
-        logger.info(jobId);
+    public BatchJobData getJobStatistic(@RequestParam String jobId){
+        log.info(jobId);
+        BatchJobData batchJobData = new BatchJobData();
         if (jobId.matches(REGEX)) {
-            anyJobStat = queryingService.queryGetJobStat(jobId);
+            batchJobData = jobService.getJobStat(jobId);
         }
-        return queryingService.getJobStatisticDtos(anyJobStat);
+        return batchJobData;
     }
+
 
     /**
      * @param userId
@@ -104,47 +97,41 @@ public class JobController {
      * @return
      */
     @GetMapping("/stats/date")
-    public Set<JobStatisticDto> getUserJobsByDate(@RequestParam String userId,
-                                                  @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date) {
-        List<JobStatistic> userJobsBydate = new ArrayList<>();
+    public BatchJobData getUserJobsByDate(@RequestParam String userId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date){
+        log.info(userId);
+        log.info(date.toString());
+        BatchJobData batchJobData = new BatchJobData();
         Preconditions.checkNotNull(userId);
-        logger.info(userId);
         if (validateUserEmail(userId)) {
-            userJobsBydate = queryingService.queryGetUserJobsByDate(userId, date.toInstant(ZoneOffset.UTC));
+            batchJobData = jobService.getUserJobsByDate(userId,date.toInstant(ZoneOffset.UTC));
         }
-        return queryingService.getJobStatisticDtos(userJobsBydate);
-
+        return batchJobData;
     }
 
     /**
-     * I think supplying seconds and miliseconds is unecessary so i would change the DateTimeFormat here to be more reasonable
-     * <p>
-     * This should also return the JobStatisticDTO not a list of integers
-     *
      * @param userId
      * @param to
      * @param from
      * @return
      */
     @GetMapping("/stats/date/range")
-    public List<Integer> getUserJobsByDateRange(@RequestParam(value = "userId") String userId,
-                                                @RequestParam(value = "from")
-                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-                                                @RequestParam(value = "to")
-                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
+    public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userId,
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to){
 
-        List<Integer> userJobsByDateRange = new ArrayList<>();
+        List<BatchJobData> userJobsByDateRange = new ArrayList<>();
         Preconditions.checkNotNull(userId);
-        if (validateUserEmail(userId)) {
-            userJobsByDateRange = queryingService.queryGetUserJobsByDateRange(userId, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC));
+        if(validateUserEmail(userId)) {
+            userJobsByDateRange = jobService.getUserJobsByDateRange(userId, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC));
         }
         return userJobsByDateRange;
     }
 
+
     @GetMapping("/stats/influx/job")
     public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId)  {
-        logger.info(userEmail);
-        logger.info(jobId.toString());
+        log.info(userEmail);
+        log.info(jobId.toString());
         List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
         data.addAll(influxIOService.getUserJobVfsBucketData(jobId, userEmail));
         return data;
@@ -173,7 +160,7 @@ public class JobController {
         return data;
     }
 
-    private boolean validateUserEmail(String userId) {
+    private boolean validateUserEmail(String userId){
         return Pattern.compile(REGEX_PATTERN)
                 .matcher(userId)
                 .matches();
