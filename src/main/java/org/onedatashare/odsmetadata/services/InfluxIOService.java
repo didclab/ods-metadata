@@ -5,9 +5,7 @@ import com.influxdb.client.QueryApi;
 import com.influxdb.client.domain.OnboardingRequest;
 import com.influxdb.client.domain.OnboardingResponse;
 import com.influxdb.exceptions.UnprocessableEntityException;
-import com.influxdb.query.FluxTable;
 import com.influxdb.query.dsl.Flux;
-import com.influxdb.query.dsl.functions.restriction.ColumnRestriction;
 import com.influxdb.query.dsl.functions.restriction.Restrictions;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.slf4j.Logger;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -43,6 +40,8 @@ public class InfluxIOService {
 
     @Value("influxdb.measurement")
     private String measurement;
+
+    private final String filterByJobId = "filter(fn: (r) => r.jobId == %s)";
 
     /**
      * Load all of a users data that ran through AWS
@@ -96,15 +95,14 @@ public class InfluxIOService {
      */
     public List<InfluxData> getUserJobInfluxData(Long jobId, String userName) {
         QueryApi queryApi = this.influxDBClient.getQueryApi();
-        String f = "filter(fn: (r) => r.jobId == %s)";
         Flux fluxQuery = Flux.from(defaultBucket)
                 .range(-1L, ChronoUnit.CENTURIES)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
                 .pivot()
-                    .withRowKey(new String[]{"_time"})
-                    .withColumnKey(new String[]{"_field"})
-                    .withValueColumn("_value")
-                .expression(String.format(f, jobId));
+                .withRowKey(new String[]{"_time"})
+                .withColumnKey(new String[]{"_field"})
+                .withValueColumn("_value")
+                .expression(String.format(filterByJobId, jobId));
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("Global Job {}: size {}", jobId, data.size());
         return data;
@@ -115,11 +113,10 @@ public class InfluxIOService {
             return new ArrayList<>();
         }
         QueryApi queryApi = this.influxDBClient.getQueryApi();
-        String f = "filter(fn: (r) => r.jobId == %s)";
         Flux fluxQuery = Flux.from(userName)
                 .range(-1L, ChronoUnit.CENTURIES)
                 .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
-                .expression(String.format(f, jobId));
+                .expression(String.format(filterByJobId, jobId));
 
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("VFS Job {}: size {}", jobId, data.size());
@@ -139,6 +136,7 @@ public class InfluxIOService {
         logger.info("VFS Jobs start:{} end:{}: size {}", start, end, data.size());
         return data;
     }
+
     public List<InfluxData> vfsMeasurementsByDates(Instant start, Instant end, String userEmail) {
         if (this.influxDBClient.getBucketsApi().findBucketByName(userEmail) == null) {
             return new ArrayList<>();
@@ -185,6 +183,26 @@ public class InfluxIOService {
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("VFS Jobs By Date: size {}", data.size());
         return data;
+    }
+
+    public List<InfluxData> monitorMeasurement(String userName, Long jobId) {
+        QueryApi queryApi = this.influxDBClient.getQueryApi();
+        if (this.influxDBClient.getBucketsApi().findBucketByName(userName) != null) {
+            Flux fluxQuery = Flux.from(userName)
+                    .range(-30L, ChronoUnit.SECONDS)
+                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
+                    .expression(String.format(filterByJobId, jobId));
+            List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
+            if (data.size() > 0) {
+                return data;
+            }
+        }
+        Flux fluxQuery = Flux.from(defaultBucket)
+                .range(-30L, ChronoUnit.SECONDS)
+                .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
+                .expression(String.format(filterByJobId, jobId));
+        return queryApi.query(fluxQuery.toString(), InfluxData.class);
     }
 
     public void onboardOdsUser(String username, String password) {

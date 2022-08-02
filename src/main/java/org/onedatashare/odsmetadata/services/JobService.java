@@ -7,6 +7,7 @@ import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 import org.onedatashare.odsmetadata.entity.BatchJobExecutionParams;
 import org.onedatashare.odsmetadata.mapper.BatchJobMapper;
 import org.onedatashare.odsmetadata.model.BatchJobData;
+import org.onedatashare.odsmetadata.model.MonitorData;
 import org.onedatashare.odsmetadata.repository.BatchJobParamRepository;
 import org.onedatashare.odsmetadata.repository.BatchJobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,13 +34,13 @@ public class JobService {
     private static final String LONG_VAL = "LONG";
     private static final String DOUBLE_VAL = "DOUBLE";
 
-    public BatchJobData getJobStat(String jobId){
-        log.info(jobId);
+    public BatchJobData getJobStat(Long jobId){
+        log.info("JobId: {}", jobId);
         BatchJobData batchJobData = new BatchJobData();
-        BatchJobExecution batchJobExecution = batchJobRepository.findBatchJobExecutionById(Long.valueOf(jobId));
+        BatchJobExecution batchJobExecution = batchJobRepository.findBatchJobExecutionById(jobId);
         if(Objects.nonNull(batchJobExecution)) {
             batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
-            List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByJobExecutionId(Long.valueOf(jobId));
+            List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByJobExecutionId(jobId);
             if (!CollectionUtils.isEmpty(batchJobExecution.getBatchJobParams())) {
                 batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
             }

@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
+import org.onedatashare.odsmetadata.model.MonitorData;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
  */
 @Slf4j
 @RestController
-@RequestMapping(value="/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BatchJobController {
     @Autowired
     JobService jobService;
@@ -46,11 +47,11 @@ public class BatchJobController {
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public List<Long> getUserJobIds(@RequestParam String userEmail){
+    public List<Long> getUserJobIds(@RequestParam String userEmail) {
         List<Long> userEmailList = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
         log.info(userEmail);
-        if(validateUserEmail(userEmail)) {
+        if (validateUserEmail(userEmail)) {
             userEmailList = jobService.getUserJobIds(userEmail);
         }
         return userEmailList;
@@ -63,12 +64,12 @@ public class BatchJobController {
      * @return A list of all JobStatistic involving a user
      */
     @GetMapping("/all_stats")
-    public List<BatchJobData> getAllJobStatisticsOfUser(@RequestParam String userEmail){
+    public List<BatchJobData> getAllJobStatisticsOfUser(@RequestParam String userEmail) {
         List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
         log.info(userEmail);
-        if(validateUserEmail(userEmail)) {
-            allJobStatsOfUser =  jobService.getAllJobStatisticsOfUser(userEmail);
+        if (validateUserEmail(userEmail)) {
+            allJobStatsOfUser = jobService.getAllJobStatisticsOfUser(userEmail);
         }
         return allJobStatsOfUser;
 
@@ -81,10 +82,9 @@ public class BatchJobController {
      * @return
      */
     @GetMapping("/stat")
-    public BatchJobData getJobStatistic(@RequestParam String jobId){
-        log.info(jobId);
+    public BatchJobData getJobStatistic(@RequestParam Long jobId) {
         BatchJobData batchJobData = new BatchJobData();
-        if (jobId.matches(REGEX)) {
+        if (String.valueOf(jobId).matches(REGEX)) {
             batchJobData = jobService.getJobStat(jobId);
         }
         return batchJobData;
@@ -96,14 +96,14 @@ public class BatchJobController {
      * @param date
      * @return
      */
-    @GetMapping("/stats/date")
-    public BatchJobData getUserJobsByDate(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date){
+    @GetMapping("/stat/date")
+    public BatchJobData getUserJobsByDate(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date) {
         log.info(userEmail);
         log.info(date.toString());
         BatchJobData batchJobData = new BatchJobData();
         Preconditions.checkNotNull(userEmail);
         if (validateUserEmail(userEmail)) {
-            batchJobData = jobService.getUserJobsByDate(userEmail,date.toInstant(ZoneOffset.UTC));
+            batchJobData = jobService.getUserJobsByDate(userEmail, date.toInstant(ZoneOffset.UTC));
         }
         return batchJobData;
     }
@@ -117,11 +117,11 @@ public class BatchJobController {
     @GetMapping("/stats/date/range")
     public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userEmail,
                                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
-                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to){
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
 
         List<BatchJobData> userJobsByDateRange = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
-        if(validateUserEmail(userEmail)) {
+        if (validateUserEmail(userEmail)) {
             userJobsByDateRange = jobService.getUserJobsByDateRange(userEmail, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC));
         }
         return userJobsByDateRange;
@@ -129,18 +129,11 @@ public class BatchJobController {
 
 
     @GetMapping("/stats/influx/job")
-    public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId)  {
+    public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId) {
         log.info(userEmail);
         log.info(jobId.toString());
         List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
         data.addAll(influxIOService.getUserJobVfsBucketData(jobId, userEmail));
-        return data;
-    }
-
-    @GetMapping("/stats/influx/user")
-    public List<InfluxData> getAllUserJobs(@RequestParam String userEmail) {
-        List<InfluxData> data = influxIOService.getAllUserGlobalData(userEmail);
-        data.addAll(influxIOService.getAllUserVfsData(userEmail));
         return data;
     }
 
@@ -160,9 +153,30 @@ public class BatchJobController {
         return data;
     }
 
-    private boolean validateUserEmail(String userEmail){
+    @GetMapping("/stats/influx/user")
+    public List<InfluxData> getAllUserJobs(@RequestParam String userEmail) {
+        List<InfluxData> data = influxIOService.getAllUserGlobalData(userEmail);
+        data.addAll(influxIOService.getAllUserVfsData(userEmail));
+        return data;
+    }
+
+    private boolean validateUserEmail(String userEmail) {
         return Pattern.compile(REGEX_PATTERN)
                 .matcher(userEmail)
                 .matches();
+    }
+
+    @GetMapping("/monitor")
+    public MonitorData monitor(@RequestParam String userEmail, @RequestParam(value = "jobIds") Long[] jobIds) {
+        MonitorData monitorData = new MonitorData();
+        List<BatchJobData> jobData = new ArrayList<>();
+        List<InfluxData> measurementData = new ArrayList<>();
+        for (Long jobId : jobIds) {
+            measurementData.addAll(influxIOService.monitorMeasurement(userEmail, jobId));
+            jobData.add(jobService.getJobStat(jobId));
+        }
+        monitorData.setJobData(jobData);
+        monitorData.setMeasurementData(measurementData);
+        return monitorData;
     }
 }
