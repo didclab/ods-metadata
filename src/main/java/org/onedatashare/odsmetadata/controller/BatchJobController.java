@@ -34,41 +34,41 @@ public class BatchJobController {
     InfluxIOService influxIOService;
 
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
-            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userId is an email
+            + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userEmail is an email
 
     private static final String REGEX = "\\d+";
 
     /**
-     * Returns all the jobs with the corresponding userId
+     * Returns all the jobs with the corresponding userEmail
      * This call should be done if you only want the JobIds
      *
-     * @param userId
+     * @param userEmail
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public List<Long> getUserJobIds(@RequestParam String userId){
-        List<Long> userIdList = new ArrayList<>();
-        Preconditions.checkNotNull(userId);
-        log.info(userId);
-        if(validateUserEmail(userId)) {
-            userIdList = jobService.getUserJobIds(userId);
+    public List<Long> getUserJobIds(@RequestParam String userEmail){
+        List<Long> userEmailList = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        log.info(userEmail);
+        if(validateUserEmail(userEmail)) {
+            userEmailList = jobService.getUserJobIds(userEmail);
         }
-        return userIdList;
+        return userEmailList;
     }
 
     /**
      * This is a bulk API call so if the user wants all information on all their jobs this is the right call
      *
-     * @param userId
+     * @param userEmail
      * @return A list of all JobStatistic involving a user
      */
     @GetMapping("/all_stats")
-    public List<BatchJobData> getAllJobStatisticsOfUser(@RequestParam String userId){
+    public List<BatchJobData> getAllJobStatisticsOfUser(@RequestParam String userEmail){
         List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
-        Preconditions.checkNotNull(userId);
-        log.info(userId);
-        if(validateUserEmail(userId)) {
-            allJobStatsOfUser =  jobService.getAllJobStatisticsOfUser(userId);
+        Preconditions.checkNotNull(userEmail);
+        log.info(userEmail);
+        if(validateUserEmail(userEmail)) {
+            allJobStatsOfUser =  jobService.getAllJobStatisticsOfUser(userEmail);
         }
         return allJobStatsOfUser;
 
@@ -92,37 +92,37 @@ public class BatchJobController {
 
 
     /**
-     * @param userId
+     * @param userEmail
      * @param date
      * @return
      */
     @GetMapping("/stats/date")
-    public BatchJobData getUserJobsByDate(@RequestParam String userId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date){
-        log.info(userId);
+    public BatchJobData getUserJobsByDate(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date){
+        log.info(userEmail);
         log.info(date.toString());
         BatchJobData batchJobData = new BatchJobData();
-        Preconditions.checkNotNull(userId);
-        if (validateUserEmail(userId)) {
-            batchJobData = jobService.getUserJobsByDate(userId,date.toInstant(ZoneOffset.UTC));
+        Preconditions.checkNotNull(userEmail);
+        if (validateUserEmail(userEmail)) {
+            batchJobData = jobService.getUserJobsByDate(userEmail,date.toInstant(ZoneOffset.UTC));
         }
         return batchJobData;
     }
 
     /**
-     * @param userId
+     * @param userEmail
      * @param to
      * @param from
      * @return
      */
     @GetMapping("/stats/date/range")
-    public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userId,
+    public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userEmail,
                                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
                                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to){
 
         List<BatchJobData> userJobsByDateRange = new ArrayList<>();
-        Preconditions.checkNotNull(userId);
-        if(validateUserEmail(userId)) {
-            userJobsByDateRange = jobService.getUserJobsByDateRange(userId, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC));
+        Preconditions.checkNotNull(userEmail);
+        if(validateUserEmail(userEmail)) {
+            userJobsByDateRange = jobService.getUserJobsByDateRange(userEmail, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC));
         }
         return userJobsByDateRange;
     }
@@ -160,9 +160,9 @@ public class BatchJobController {
         return data;
     }
 
-    private boolean validateUserEmail(String userId){
+    private boolean validateUserEmail(String userEmail){
         return Pattern.compile(REGEX_PATTERN)
-                .matcher(userId)
+                .matcher(userEmail)
                 .matches();
     }
 }
