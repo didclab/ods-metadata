@@ -11,8 +11,9 @@ import org.onedatashare.odsmetadata.repository.BatchJobParamRepository;
 import org.onedatashare.odsmetadata.repository.BatchJobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,16 +37,23 @@ public class JobService {
         log.info(jobId);
         BatchJobData batchJobData = new BatchJobData();
         BatchJobExecution batchJobExecution = batchJobRepository.findBatchJobExecutionById(Long.valueOf(jobId));
-        batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
-        List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByJobExecutionId(Long.valueOf(jobId));
-        batchJobData.setJobParameters(mapJobParameters(batchJobExecutionParams));
+        if(Objects.nonNull(batchJobExecution)) {
+            batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
+            List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByJobExecutionId(Long.valueOf(jobId));
+            if (!CollectionUtils.isEmpty(batchJobExecution.getBatchJobParams())) {
+                batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
+            }
+        }
         return batchJobData;
     }
 
     public List<Long> getUserJobIds(String userId){
         log.info(userId);
+        List<Long> userJobIds = new ArrayList<>();
         List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByStringValLike(userId);
-        List<Long> userJobIds = batchJobExecutionParams.stream().map(BatchJobExecutionParams :: getJobExecutionId).collect(Collectors.toList());
+        if(!CollectionUtils.isEmpty(batchJobExecutionParams)) {
+            userJobIds = batchJobExecutionParams.stream().map(BatchJobExecutionParams :: getJobExecutionId).collect(Collectors.toList());
+        }
         return userJobIds;
     }
 
@@ -54,27 +62,42 @@ public class JobService {
         log.info(userId);
         List<BatchJobData> batchJobDataList = new ArrayList<>();
         List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_StringValLike(userId);
-        batchJobExecutions.stream().forEach(batchJobExecution -> {
-            BatchJobData batchJobData = new BatchJobData();
-            batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
-            batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
-            batchJobDataList.add(batchJobData);
-        });
+        processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
         log.info("Total jobs for user:"+batchJobDataList.size());
         return batchJobDataList;
     }
-    public BatchJobData getUserJobsByDate(String userId, Date date){
+    public BatchJobData getUserJobsByDate(String userId, Instant date){
+        log.info(date.toString());
+        log.info(Date.from(date).toString());
         BatchJobData batchJobData = new BatchJobData();
-        BatchJobExecution batchJobExecution = batchJobRepository.findByStartTimeAndBatchJobParams_StringVal(new Timestamp(date.getTime()),userId);
-        batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
-        batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
+        BatchJobExecution batchJobExecution = batchJobRepository.findByStartTimeAndBatchJobParams_StringVal(Date.from(date),userId);
+        if(Objects.nonNull(batchJobExecution)) {
+            batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
+            if (!CollectionUtils.isEmpty(batchJobExecution.getBatchJobParams())) {
+                batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
+            }
+        }
         return batchJobData;
     }
 
-    public List<Long> getUserJobsByDateRange(String userId, Date from, Date to){
-        List<BatchJobExecution> batchJobExecution = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_StringValLike(from,to,userId);
-        List<Long> jobIds = batchJobExecution.stream().map(BatchJobExecution::getId).collect(Collectors.toList());
-        return jobIds;
+    public List<BatchJobData> getUserJobsByDateRange(String userId, Instant from, Instant to){
+        List<BatchJobData> batchJobDataList = new ArrayList<>();
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_StringValLike(Date.from(from),Date.from(to),userId);
+        processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
+        return batchJobDataList;
+    }
+
+    private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {
+        if(!CollectionUtils.isEmpty(batchJobExecutions)) {
+            batchJobExecutions.stream().forEach(batchJobExecution -> {
+                BatchJobData batchJobData = new BatchJobData();
+                batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
+                if(!CollectionUtils.isEmpty(batchJobExecution.getBatchJobParams())) {
+                    batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
+                }
+                batchJobDataList.add(batchJobData);
+            });
+        }
     }
 
     @NotNull
