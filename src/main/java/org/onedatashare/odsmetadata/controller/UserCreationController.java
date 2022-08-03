@@ -48,6 +48,7 @@ public class UserCreationController {
             try{
                 int res  = userCreationService.createUser(name, password);
                 if(res==1) certService.createCertificate();
+                
             } catch(DataAccessException ex) {
                 logger.error("Exception occurred in user creation. ", ex);
                 return new ResponseEntity<>(String.format("Exception occurred during user creation."),
