@@ -1,4 +1,5 @@
-package org.onedatashare.odsmetadata.services; /**
+package org.onedatashare.odsmetadata.services;
+/**
  *
  */
 
@@ -16,18 +17,16 @@ import java.util.Date;
 
 
 /**
- * This class uses the Bouncycastle lightweight API to generate X.509 certificates programmatically.
- *
- * @author abdul
- *
+ * This class uses the Bouncycastle lightweight API to generate X.509 certificates.
+ *@author aishwaryarath
  */
 @Service
 public class CertService {
 
-    private static final String CERTIFICATE_ALIAS = "YOUR_CERTIFICATE_NAME";
+    private static final String CERTIFICATE_ALIAS = "Test_Cert";
     private static final String CERTIFICATE_ALGORITHM = "RSA";
     private static final String CERTIFICATE_DN = "CN=cn, O=o, L=L, ST=il, C= c";
-    private static final String CERTIFICATE_NAME = "keystore.test";
+    private static final String CERTIFICATE_NAME = "keystore.jks";
     private static final int CERTIFICATE_BITS = 1024;
 
     static {
