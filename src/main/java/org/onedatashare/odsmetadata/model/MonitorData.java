@@ -6,6 +6,5 @@ import java.util.List;
 
 @Data
 public class MonitorData {
-    BatchJobData jobData;
     List<InfluxData> measurementData;
 }
