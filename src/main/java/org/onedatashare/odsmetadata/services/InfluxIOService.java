@@ -189,7 +189,7 @@ public class InfluxIOService {
         QueryApi queryApi = this.influxDBClient.getQueryApi();
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) != null) {
             Flux fluxQuery = Flux.from(userName)
-                    .range(-30L, ChronoUnit.SECONDS)
+                    .range(-60L, ChronoUnit.SECONDS)
                     .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
                     .expression(String.format(filterByJobId, jobId));
             List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
@@ -198,7 +198,7 @@ public class InfluxIOService {
             }
         }
         Flux fluxQuery = Flux.from(defaultBucket)
-                .range(-30L, ChronoUnit.SECONDS)
+                .range(-60L, ChronoUnit.SECONDS)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
                 .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
                 .expression(String.format(filterByJobId, jobId));
