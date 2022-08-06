@@ -169,6 +169,7 @@ public class BatchJobController {
     @GetMapping("/monitor")
     public MonitorData monitor(@RequestParam String userEmail, @RequestParam(value = "jobId") Long jobId) {
         MonitorData monitorData = new MonitorData();
+        log.info("UserName: {} and jobId:{}",userEmail, jobId);
         List<InfluxData> measurementData = influxIOService.monitorMeasurement(userEmail, jobId);
         monitorData.setMeasurementData(measurementData);
         return monitorData;
