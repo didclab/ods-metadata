@@ -171,6 +171,8 @@ public class BatchJobController {
         MonitorData monitorData = new MonitorData();
         log.info("UserName: {} and jobId:{}",userEmail, jobId);
         List<InfluxData> measurementData = influxIOService.monitorMeasurement(userEmail, jobId);
+        BatchJobData jobData = jobService.getJobStat(jobId);
+        monitorData.setJobData(jobData);
         monitorData.setMeasurementData(measurementData);
         return monitorData;
     }
