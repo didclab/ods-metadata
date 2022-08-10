@@ -8,6 +8,9 @@ import org.onedatashare.odsmetadata.model.MonitorData;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -75,6 +78,18 @@ public class BatchJobController {
 
     }
 
+    @GetMapping("/stat/page")
+    public List<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable){
+        List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        Preconditions.checkNotNull(pageable);
+        log.info(userEmail);
+        if (validateUserEmail(userEmail)) {
+            allJobStatsOfUser = jobService.getAllJobStatisticsOfUser(userEmail,pageable);
+        }
+        return allJobStatsOfUser;
+    }
+
     /**
      * Returns the meta data regarding any one job
      *
@@ -127,6 +142,26 @@ public class BatchJobController {
         return userJobsByDateRange;
     }
 
+    /**
+     * @param userEmail
+     * @param to
+     * @param from
+     * @return
+     */
+    @GetMapping("/stats/page/date/range")
+    public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userEmail,
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+                                                     @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
+                                                     Pageable pageable) {
+
+        List<BatchJobData> userJobsByDateRange = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        if (validateUserEmail(userEmail)) {
+            userJobsByDateRange = jobService.getUserJobsByDateRange(userEmail, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC), pageable);
+        }
+        return userJobsByDateRange;
+    }
+
 
     @GetMapping("/stats/influx/job")
     public List<InfluxData> getJobMeasurements(@RequestParam String userEmail, @RequestParam Long jobId) {
@@ -159,6 +194,7 @@ public class BatchJobController {
         data.addAll(influxIOService.getAllUserVfsData(userEmail));
         return data;
     }
+
 
     private boolean validateUserEmail(String userEmail) {
         return Pattern.compile(REGEX_PATTERN)
