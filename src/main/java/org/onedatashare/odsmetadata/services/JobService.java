@@ -10,6 +10,8 @@ import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.repository.BatchJobParamRepository;
 import org.onedatashare.odsmetadata.repository.BatchJobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -68,13 +70,13 @@ public class JobService {
         return batchJobDataList;
     }
 
-    public List<BatchJobData> getAllJobStatisticsOfUser(String userId, Pageable pr) {
+    public Page<BatchJobData> getAllJobStatisticsOfUser(String userId, Pageable pr) {
         log.info("UserId={}, Pageable={}", userId, pr);
         List<BatchJobData> batchJobDataList = new ArrayList<>();
         List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_StringValLike(userId, pr);
         processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
         log.info("Total jobs for user:" + batchJobDataList.size());
-        return batchJobDataList;
+        return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
     }
 
     public BatchJobData getUserJobsByDate(String userId, Instant date) {
@@ -98,11 +100,11 @@ public class JobService {
         return batchJobDataList;
     }
 
-    public List<BatchJobData> getUserJobsByDateRange(String userId, Instant from, Instant to, Pageable pr) {
+    public Page<BatchJobData> getUserJobsByDateRange(String userId, Instant from, Instant to, Pageable pr) {
         List<BatchJobData> batchJobDataList = new ArrayList<>();
         List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_StringValLike(Date.from(from), Date.from(to), userId, pr);
         processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
-        return batchJobDataList;
+        return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
     }
 
     private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {

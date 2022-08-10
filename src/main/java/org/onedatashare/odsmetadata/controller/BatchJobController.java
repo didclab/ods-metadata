@@ -8,9 +8,9 @@ import org.onedatashare.odsmetadata.model.MonitorData;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -79,15 +79,16 @@ public class BatchJobController {
     }
 
     @GetMapping("/stat/page")
-    public List<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable){
+    public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable){
         List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
+        Page<BatchJobData> ret = new PageImpl<>(allJobStatsOfUser);
         Preconditions.checkNotNull(userEmail);
         Preconditions.checkNotNull(pageable);
         log.info(userEmail);
         if (validateUserEmail(userEmail)) {
-            allJobStatsOfUser = jobService.getAllJobStatisticsOfUser(userEmail,pageable);
+            ret = jobService.getAllJobStatisticsOfUser(userEmail,pageable);
         }
-        return allJobStatsOfUser;
+        return ret;
     }
 
     /**
@@ -149,17 +150,18 @@ public class BatchJobController {
      * @return
      */
     @GetMapping("/stats/page/date/range")
-    public List<BatchJobData> getUserJobsByDateRange(@RequestParam String userEmail,
+    public Page<BatchJobData> getUserJobsByDateRange(@RequestParam String userEmail,
                                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
                                                      @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
                                                      Pageable pageable) {
 
         List<BatchJobData> userJobsByDateRange = new ArrayList<>();
+        Page<BatchJobData> ret = new PageImpl<>(userJobsByDateRange);
         Preconditions.checkNotNull(userEmail);
         if (validateUserEmail(userEmail)) {
-            userJobsByDateRange = jobService.getUserJobsByDateRange(userEmail, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC), pageable);
+            ret = jobService.getUserJobsByDateRange(userEmail, from.toInstant(ZoneOffset.UTC), to.toInstant(ZoneOffset.UTC), pageable);
         }
-        return userJobsByDateRange;
+        return ret;
     }
 
 
