@@ -1,7 +1,7 @@
 package org.onedatashare.odsmetadata.controller;
 
-import org.onedatashare.odsmetadata.services.CertService;
 import org.onedatashare.odsmetadata.services.UserCreationService;
+import org.onedatashare.odsmetadata.services.CertService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +47,9 @@ public class UserCreationController {
             name = splitUserId(username);
             try{
                 int res  = userCreationService.createUser(name, password);
-                if(res==1) certService.createCertificate();
-                
+                logger.info("value of res: "+res);
+                if(res==0) certService.certificateGen();
+
             } catch(DataAccessException ex) {
                 logger.error("Exception occurred in user creation. ", ex);
                 return new ResponseEntity<>(String.format("Exception occurred during user creation."),
@@ -117,7 +118,7 @@ public class UserCreationController {
         if(validateuserId(username)) {
             name = splitUserId(username);
             try{
-                certService.createCertificate();
+                certService.certificateGen();
             } catch (Exception e) {
                 logger.error("Exception occurred in certificate creation. ", e);
                 return new ResponseEntity<>(String.format("Exception occurred in certificate creation. "),
@@ -142,9 +143,17 @@ public class UserCreationController {
     @GetMapping("/user/ssl")
     public ResponseEntity<String> genSsl() throws Exception {
         boolean flag = false;
-        certService.createCertificate();
+        certService.certificateGen();
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
+
+
+    @GetMapping("/user/cockroachdb")
+    public ResponseEntity<String> cert() throws Exception {
+        certService.certificateGen();
+        return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
 
 
 }

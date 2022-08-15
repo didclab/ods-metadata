@@ -30,8 +30,6 @@ public class UserCreationService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-
-
     /**
      * @param dataSource
      */

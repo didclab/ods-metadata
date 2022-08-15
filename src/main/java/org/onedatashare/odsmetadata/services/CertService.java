@@ -1,67 +1,72 @@
 package org.onedatashare.odsmetadata.services;
-/**
- *
- */
 
-import org.bouncycastle.jce.X509Principal;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.math.BigInteger;
-import java.security.*;
-import java.security.cert.X509Certificate;
-import java.util.Date;
+import java.io.*;
+import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
-
-/**
- * This class uses the Bouncycastle lightweight API to generate X.509 certificates.
- *@author aishwaryarath
- */
 @Service
 public class CertService {
 
-    private static final String CERTIFICATE_ALIAS = "Test_Cert";
-    private static final String CERTIFICATE_ALGORITHM = "RSA";
-    private static final String CERTIFICATE_DN = "CN=cn, O=o, L=L, ST=il, C= c";
-    private static final String CERTIFICATE_NAME = "keystore.jks";
-    private static final int CERTIFICATE_BITS = 1024;
 
-    static {
-        // adds the Bouncy castle provider to java security
-        Security.addProvider(new BouncyCastleProvider());
+    private static final Logger logger = LoggerFactory.getLogger(CertService.class);
+
+
+    public void certificateGen(){
+        boolean isWindows = System.getProperty("os.name")
+                .toLowerCase().startsWith("windows");
+        logger.info("line 21: is it windows? "+isWindows);
+        try {
+        ProcessBuilder builder = new ProcessBuilder();
+        File resourceFile = new File("../myFile.txt");
+
+
+            if (isWindows) {
+            builder.command("cmd.exe", "/c", "dir");
+        } else {
+            builder.command("sh", "-c", "mkdir userCerts userDirectory ; " +
+                    "openssl genrsa -out userDirectory/ca.key 2048 ; chmod 400 userDirectory/ca.key ; " +
+                    "openssl req -new -x509 -config ca.cnf -key userDirectory/ca.key -out userCerts/ca.crt " +
+                    "-days 365 -batch ; rm -f index.txt serial.txt ; touch index.txt ; echo '01' > serial.txt ; " +
+                    "openssl genrsa -out userCerts/client.ods.key 2048 ; chmod 400 userCerts/client.ods.key ; " +
+                    "openssl req -new -config client.cnf -key userCerts/client.ods.key -out client.ods.csr -batch ; " +
+                    "openssl ca -config ca.cnf -keyfile userDirectory/ca.key -cert userCerts/ca.crt -policy " +
+                    "signing_policy -extensions signing_client_req -out userCerts/client.ods.crt -outdir userCerts/ -in " +
+                    "client.ods.csr -batch");
+
+        }
+
+        builder.directory(new File(System.getProperty("user.home")));
+        Process process = builder.start();
+
+        StreamGobbler streamGobbler =
+                new StreamGobbler(process.getInputStream(), System.out::println);
+
+        Executors.newSingleThreadExecutor().submit(streamGobbler);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
+    private static class StreamGobbler implements Runnable {
+        private InputStream inputStream;
+        private Consumer<String> consumer;
 
+        public StreamGobbler(InputStream inputStream, Consumer<String> consumer) {
+            this.inputStream = inputStream;
+            this.consumer = consumer;
+        }
 
-    @SuppressWarnings("deprecation")
-    public X509Certificate createCertificate() throws Exception{
-        X509Certificate cert = null;
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(CERTIFICATE_ALGORITHM);
-        keyPairGenerator.initialize(CERTIFICATE_BITS, new SecureRandom());
-        KeyPair keyPair = keyPairGenerator.generateKeyPair();
-
-        // GENERATE THE X509 CERTIFICATE
-        X509V3CertificateGenerator v3CertGen =  new X509V3CertificateGenerator();
-        v3CertGen.setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()));
-        v3CertGen.setIssuerDN(new X509Principal(CERTIFICATE_DN));
-        v3CertGen.setNotBefore(new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24));
-        v3CertGen.setNotAfter(new Date(System.currentTimeMillis() + (1000L * 60 * 60 * 24 * 365*10)));
-        v3CertGen.setSubjectDN(new X509Principal(CERTIFICATE_DN));
-        v3CertGen.setPublicKey(keyPair.getPublic());
-        v3CertGen.setSignatureAlgorithm("SHA256WithRSAEncryption");
-        cert = v3CertGen.generateX509Certificate(keyPair.getPrivate());
-        saveCert(cert,keyPair.getPrivate());
-        return cert;
+        @Override
+        public void run() {
+            new BufferedReader(new InputStreamReader(inputStream)).lines()
+                    .forEach(consumer);
+        }
     }
 
-    private void saveCert(X509Certificate cert, PrivateKey key) throws Exception {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        keyStore.load(null, null);
-        keyStore.setKeyEntry(CERTIFICATE_ALIAS, key, "YOUR_PASSWORD".toCharArray(),  new java.security.cert.Certificate[]{cert});
-        File file = new File(".", CERTIFICATE_NAME);
-        keyStore.store( new FileOutputStream(file), "YOUR_PASSWORD".toCharArray() );
-    }
 }
