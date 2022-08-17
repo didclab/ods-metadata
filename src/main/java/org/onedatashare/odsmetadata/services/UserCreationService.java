@@ -20,12 +20,9 @@ public class UserCreationService {
     private int VAL_UNTIL;
 
     private final String QUERY_CREATEUSER="create user ? WITH LOGIN PASSWORD ? VALID UNTIL ?";
-    private final String QUERY_DELETEUSER="update pg_roles set rolcanlogin = false where rolname ?";
-    private final String QUERY_UPDATEUSER=null;
-    private final String QUERY_REFRESHUSER=null;
-    private final String QUERY_ALLOWGRANT=null;
-    private final String QUERY_REVOKEGRANT=null;
-    private final String QUERY_UPDATEGRANT=null;
+    private final String QUERY_DELETEUSER="drop user ?";
+    private final String QUERY_UPDATEUSER="ALTER USER ? WITH PASSWORD ? VALID UNTIL ?";
+
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -45,20 +42,12 @@ public class UserCreationService {
        return jdbcTemplate.update(QUERY_CREATEUSER, username,password,today.plusDays(VAL_UNTIL));
     }
 
-    public boolean deleteUserService(@NotNull String username){
-        jdbcTemplate.update(QUERY_DELETEUSER,username);
-        return true;
+    public int deleteUserService(@NotNull String username){
+        return jdbcTemplate.update(QUERY_DELETEUSER,username);
     }
 
-    public boolean updateUserService(String username,String password){
-
-        return true;
+    public int updateUserService(@NotNull String username,@NotNull String password){
+        return jdbcTemplate.update(QUERY_UPDATEUSER, username,password,today.plusDays(VAL_UNTIL));
     }
-
-    public boolean refreshUserService(String username,String password){
-
-        return true;
-    }
-
 
 }

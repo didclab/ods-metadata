@@ -74,7 +74,7 @@ public class UserCreationController {
         if(validateuserId(username)) {
             name = splitUserId(username);
             try {
-                userCreationService.deleteUserService(username);
+                userCreationService.deleteUserService(name);
             } catch (DataAccessException ex) {
                 logger.error("Exception occurred in user deletion. ", ex);
                 return new ResponseEntity<>(String.format("Exception occurred during user deletion."),
@@ -96,7 +96,7 @@ public class UserCreationController {
         if(validateuserId(username)) {
             name = splitUserId(username);
             try {
-                userCreationService.updateUserService(username,password);
+                userCreationService.updateUserService(name,password);
             } catch (DataAccessException ex) {
                 logger.error("Exception occurred in updating user's password. ", ex);
                 return new ResponseEntity<>(String.format("Exception occurred in updating user's password."),
@@ -104,7 +104,7 @@ public class UserCreationController {
             }
 
         }
-        return new ResponseEntity<>(String.format("User: '%s' deleted successfully!", name),
+        return new ResponseEntity<>(String.format("User: '%s' details updated successfully!", name),
                 HttpStatus.ACCEPTED);
     }
 

@@ -164,17 +164,13 @@ public class QueryingService {
         Map<String, String> allStringVal = new HashMap<>();
 
         for(JobStatistic jobStatistic: jobStatisticList ){
-            logger.info("type_cd: "+jobStatistic.getType_cd());
             if(jobStatistic.getType_cd().equals("LONG")){
-                logger.info("step 169 if ");
                 allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getLong_val());
             }
             else if(jobStatistic.getType_cd().equals("STRING")){
-                logger.info("step 173 else-if ");
                 allStringVal.put(jobStatistic.getKeyVal(),jobStatistic.getStrVal());
             }
         }
-        logger.info("strval changes 166: "+allStringVal);
         return allStringVal;
 
     }
