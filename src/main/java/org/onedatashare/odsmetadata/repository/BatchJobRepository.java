@@ -4,13 +4,14 @@ import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 import org.onedatashare.odsmetadata.entity.BatchJobExecutionParams;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
 
 @Repository
-public interface BatchJobRepository extends JpaRepository<BatchJobExecution, Long> {
+public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobExecution, Long> {
 
 
     BatchJobExecution findBatchJobExecutionById(Long id);
