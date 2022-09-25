@@ -2,6 +2,7 @@ package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.engine.jdbc.batch.spi.Batch;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.MonitorData;
@@ -78,6 +79,18 @@ public class BatchJobController {
 
     }
 
+    @GetMapping("/stats/jobIds")
+    public List<BatchJobData> getListOfJobStatsFromIds(@RequestParam String userEmail, @RequestParam List<Long> jobIds) {
+        List<BatchJobData> jobStats = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        if(validateUserEmail(userEmail)){
+            for(Long jobId : jobIds){
+                jobStats.add(jobService.getJobStat(jobId));
+            }
+        }
+        return jobStats;
+    }
+
     @GetMapping("/stat/page")
     public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable){
         List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
@@ -93,7 +106,6 @@ public class BatchJobController {
 
     /**
      * Returns the meta data regarding any one job
-     *
      * @param jobId
      * @return
      */
