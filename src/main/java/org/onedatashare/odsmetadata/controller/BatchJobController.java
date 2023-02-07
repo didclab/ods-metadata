@@ -182,7 +182,7 @@ public class BatchJobController {
         log.info(userEmail);
         log.info(jobId.toString());
         List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
-        data.addAll(influxIOService.getUserJobVfsBucketData(jobId, userEmail));
+        data.addAll(influxIOService.queryVfsBucketWithJobId(jobId, userEmail));
         return data;
     }
 
