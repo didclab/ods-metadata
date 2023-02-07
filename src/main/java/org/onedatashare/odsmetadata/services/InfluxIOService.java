@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -24,24 +25,34 @@ public class InfluxIOService {
 
     Logger logger = LoggerFactory.getLogger(InfluxIOService.class);
 
-    @Autowired
     private InfluxDBClient influxDBClient;
 
     private final String ODS_USER = "ods_user";
     private final String ODS_JOB_ID = "jobId";
+    private final String MEASUREMENT = "transfer_data";
 
     private final String defaultBucket = "OdsTransferNodes";
 
-    @Value("influxdb.org")
+    @Value("${influxdb.org}")
     private String influxOrg;
 
-    @Value("influxdb.token")
+    @Value("${influxdb.token}")
     private String token;
 
-    @Value("influxdb.measurement")
+    @Value("${influxdb.measurement}")
     private String measurement;
 
     private final String filterByJobId = "filter(fn: (r) => r.jobId == %s)";
+    private QueryApi queryApi;
+
+    public InfluxIOService(InfluxDBClient influxDBClient) {
+        this.influxDBClient = influxDBClient;
+    }
+
+    @PostConstruct
+    public void postConstruct(){
+        this.queryApi = this.influxDBClient.getQueryApi();
+    }
 
     /**
      * Load all of a users data that ran through AWS
@@ -50,14 +61,10 @@ public class InfluxIOService {
      * @return
      */
     public List<InfluxData> getAllUserGlobalData(String userName) {
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
         Flux fluxQuery = Flux.from(defaultBucket)
                 .range(-1L, ChronoUnit.CENTURIES)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("Global All User {}: size {}", userName, data.size());
         return data;
@@ -73,17 +80,17 @@ public class InfluxIOService {
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) == null) {
             return new ArrayList<>();
         }
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
-        logger.info(queryApi.toString());
-        Flux fluxQuery = Flux.from(userName)
-                .range(-1L, ChronoUnit.CENTURIES)
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
-        List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
-        logger.info("VFS All User {}: size {}", userName, data.size());
-        return data;
+        Restrictions restrictions = Restrictions.and(
+                Restrictions.measurement().equal("transfer_data"),
+                Restrictions.tag("ods_user").equal(userName)
+        );
+        Flux flux = Flux.from(userName)
+                .range(-1L, ChronoUnit.DAYS)
+                .filter(restrictions)
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+        String fluxStr = flux.toString();
+        logger.info("Vfs Flux Query = {}", fluxStr);
+        return  queryApi.query(fluxStr, InfluxData.class);
     }
 
     /**
@@ -94,44 +101,43 @@ public class InfluxIOService {
      * @return
      */
     public List<InfluxData> getUserJobInfluxData(Long jobId, String userName) {
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
+        Restrictions globalRestrictions = Restrictions.and(
+                Restrictions.tag(ODS_USER).equal(userName),
+                Restrictions.tag(ODS_JOB_ID).equal(jobId)
+        );
         Flux fluxQuery = Flux.from(defaultBucket)
                 .range(-1L, ChronoUnit.CENTURIES)
-                .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value")
-                .expression(String.format(filterByJobId, jobId));
+                .filter(globalRestrictions)
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("Global Job {}: size {}", jobId, data.size());
         return data;
     }
 
-    public List<InfluxData> getUserJobVfsBucketData(Long jobId, String userName) {
+    public List<InfluxData> queryVfsBucketWithJobId(Long jobId, String userName){
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) == null) {
             return new ArrayList<>();
         }
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
-        Flux fluxQuery = Flux.from(userName)
-                .range(-1L, ChronoUnit.CENTURIES)
-                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
-                .expression(String.format(filterByJobId, jobId));
-
-        List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
-        logger.info("VFS Job {}: size {}", jobId, data.size());
+        Restrictions restrictions = Restrictions.and(
+                Restrictions.measurement().equal("transfer_data"),
+                Restrictions.tag("jobId").equal(String.valueOf(jobId)),
+                Restrictions.tag("ods_user").equal(userName)
+        );
+        Flux flux = Flux.from(userName)
+                .range(-1L, ChronoUnit.DAYS)
+                .filter(restrictions)
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+        String fluxStr = flux.toString();
+        logger.info("Vfs Flux Query = {}", fluxStr);
+        List<InfluxData> data = queryApi.query(fluxStr, InfluxData.class);
         return data;
     }
 
     public List<InfluxData> globalMeasurementsByDates(Instant start, Instant end, String userEmail) {
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
         Flux fluxQuery = Flux.from(defaultBucket)
                 .range(start, end)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userEmail)))
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("VFS Jobs start:{} end:{}: size {}", start, end, data.size());
         return data;
@@ -142,13 +148,9 @@ public class InfluxIOService {
             return new ArrayList<>();
         }
         logger.info("Start: {} End:{}", start, end);
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
         Flux fluxQuery = Flux.from(userEmail)
                 .range(start, end)
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("VFS Jobs start:{} end:{}: size {}", start, end, data.size());
         return data;
@@ -156,14 +158,10 @@ public class InfluxIOService {
 
 
     public List<InfluxData> jobsByDateGlobalBucket(Instant instant, String userName) {
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
         Flux fluxQuery = Flux.from(defaultBucket)
                 .range(instant)
                 .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("Global Jobs By Date: size {}", data.size());
         return data;
@@ -173,36 +171,40 @@ public class InfluxIOService {
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) == null) {
             return new ArrayList<>();
         }
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
         Flux fluxQuery = Flux.from(userName)
                 .range(instant)
-                .pivot()
-                .withRowKey(new String[]{"_time"})
-                .withColumnKey(new String[]{"_field"})
-                .withValueColumn("_value");
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
         logger.info("VFS Jobs By Date: size {}", data.size());
         return data;
     }
 
     public List<InfluxData> monitorMeasurement(String userName, Long jobId) {
-        QueryApi queryApi = this.influxDBClient.getQueryApi();
+        //check if the vfs bucket exists then we check that one first for the jobId running there.
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) != null) {
+            Restrictions vfsRestrictions = Restrictions.and(
+                    Restrictions.measurement().equal(MEASUREMENT),
+                    Restrictions.tag(ODS_JOB_ID).equal(String.valueOf(jobId))
+            );
             Flux fluxQuery = Flux.from(userName)
                     .range(-60L, ChronoUnit.SECONDS)
-                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
-                    .expression(String.format(filterByJobId, jobId));
-            List<InfluxData> data = queryApi.query(fluxQuery.toString(), InfluxData.class);
-            if (data.size() > 0) {
-                return data;
-            }
+                    .filter(vfsRestrictions)
+                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+            return queryApi.query(fluxQuery.toString(), InfluxData.class);
+        } else {
+            //query global bucket
+            Restrictions globalRestrictions = Restrictions.and(
+                    Restrictions.measurement().equal(MEASUREMENT),
+                    Restrictions.tag(ODS_JOB_ID).equal(String.valueOf(jobId)),
+                    Restrictions.tag(ODS_USER).equal(userName)
+            );
+            //otherwise we check the global bucket for these values.
+            Flux fluxQuery = Flux.from(defaultBucket)
+                    .range(-60L, ChronoUnit.SECONDS)
+                    .filter(globalRestrictions)
+                    .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+            return queryApi.query(fluxQuery.toString(), InfluxData.class);
         }
-        Flux fluxQuery = Flux.from(defaultBucket)
-                .range(-60L, ChronoUnit.SECONDS)
-                .filter(Restrictions.and(Restrictions.tag(ODS_USER).equal(userName)))
-                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value")
-                .expression(String.format(filterByJobId, jobId));
-        return queryApi.query(fluxQuery.toString(), InfluxData.class);
     }
 
     public void onboardOdsUser(String username, String password) {
