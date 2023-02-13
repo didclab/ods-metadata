@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.2</version>
+        <version>2.7.8</version>
         <relativePath/>
     </parent>
     <groupId>org.onedatashare</groupId>
@@ -15,7 +15,7 @@
     <description>OneDataShare Service that exposes the Data in CDB to other services.</description>
     <properties>
         <java.version>11</java.version>
-        <spring-cloud.version>2021.0.0</spring-cloud.version>
+        <spring-cloud.version>2021.0.5</spring-cloud.version>
     </properties>
     <dependencies>
         <dependency>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-            <version>3.1.0</version>
+            <version>3.1.4</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -100,11 +100,11 @@
             <artifactId>jakarta.validation-api</artifactId>
             <version>2.0.2</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>5.3.16</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>org.springframework</groupId>-->
+<!--            <artifactId>spring-web</artifactId>-->
+<!--            <version>5.3.16</version>-->
+<!--        </dependency>-->
     </dependencies>
     <dependencyManagement>
         <dependencies>
