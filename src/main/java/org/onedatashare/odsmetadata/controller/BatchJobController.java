@@ -32,16 +32,25 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping(value = "/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BatchJobController {
-    @Autowired
-    JobService jobService;
 
-    @Autowired
-    InfluxIOService influxIOService;
+    private JobService jobService;
+
+    private InfluxIOService influxIOService;
 
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userEmail is an email
 
     private static final String REGEX = "\\d+";
+
+    @Autowired
+    public void setJobService(JobService jobService) {
+        this.jobService = jobService;
+    }
+
+    @Autowired
+    public void setInfluxIOService(InfluxIOService influxIOService) {
+        this.influxIOService = influxIOService;
+    }
 
     /**
      * Returns all the jobs with the corresponding userEmail
