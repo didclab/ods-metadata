@@ -35,12 +35,8 @@ public class JobService {
     private static final String DOUBLE_VAL = "DOUBLE";
 
     @Autowired
-    public void setBatchJobParamRepository(BatchJobParamRepository batchJobParamRepository) {
+    public JobService(BatchJobParamRepository batchJobParamRepository, BatchJobRepository batchJobRepository) {
         this.batchJobParamRepository = batchJobParamRepository;
-    }
-
-    @Autowired
-    public void setBatchJobRepository(BatchJobRepository batchJobRepository) {
         this.batchJobRepository = batchJobRepository;
     }
 

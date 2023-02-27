@@ -43,12 +43,8 @@ public class BatchJobController {
     private static final String REGEX = "\\d+";
 
     @Autowired
-    public void setJobService(JobService jobService) {
+    public BatchJobController(JobService jobService, InfluxIOService influxIOService){
         this.jobService = jobService;
-    }
-
-    @Autowired
-    public void setInfluxIOService(InfluxIOService influxIOService) {
         this.influxIOService = influxIOService;
     }
 
