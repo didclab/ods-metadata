@@ -124,7 +124,7 @@ public class InfluxIOService {
                 Restrictions.tag("ods_user").equal(userName)
         );
         Flux flux = Flux.from(userName)
-                .range(-1L, ChronoUnit.DAYS)
+                .range(-1L, ChronoUnit.CENTURIES)
                 .filter(restrictions)
                 .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         String fluxStr = flux.toString();
