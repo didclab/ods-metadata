@@ -2,7 +2,6 @@ package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.engine.jdbc.batch.spi.Batch;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.MonitorData;
@@ -83,8 +82,8 @@ public class BatchJobController {
     public List<BatchJobData> getListOfJobStatsFromIds(@RequestParam String userEmail, @RequestParam List<Long> jobIds) {
         List<BatchJobData> jobStats = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
-        if(validateUserEmail(userEmail)){
-            for(Long jobId : jobIds){
+        if (validateUserEmail(userEmail)) {
+            for (Long jobId : jobIds) {
                 jobStats.add(jobService.getJobStat(jobId));
             }
         }
@@ -92,20 +91,21 @@ public class BatchJobController {
     }
 
     @GetMapping("/stat/page")
-    public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable){
+    public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable) {
         List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
         Page<BatchJobData> ret = new PageImpl<>(allJobStatsOfUser);
         Preconditions.checkNotNull(userEmail);
         Preconditions.checkNotNull(pageable);
         log.info(userEmail);
         if (validateUserEmail(userEmail)) {
-            ret = jobService.getAllJobStatisticsOfUser(userEmail,pageable);
+            ret = jobService.getAllJobStatisticsOfUser(userEmail, pageable);
         }
         return ret;
     }
 
     /**
      * Returns the meta data regarding any one job
+     *
      * @param jobId
      * @return
      */
@@ -186,6 +186,11 @@ public class BatchJobController {
         return data;
     }
 
+    @GetMapping("/stats/influx/transfer/node")
+    public List<InfluxData> getJobMeasurementsUniversal(@RequestParam String userEmail, @RequestParam String appId, @RequestParam Long jobId, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
+        return influxIOService.getMeasurementsPerNode(userEmail, appId, jobId, start);
+    }
+
     @GetMapping("/stats/influx/job/range")
     public List<InfluxData> getMeasurementsByDateRange(@RequestParam String userEmail,
                                                        @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
@@ -219,7 +224,7 @@ public class BatchJobController {
     @GetMapping("/monitor")
     public MonitorData monitor(@RequestParam String userEmail, @RequestParam(value = "jobId") Long jobId) {
         MonitorData monitorData = new MonitorData();
-        log.info("UserName: {} and jobId:{}",userEmail, jobId);
+        log.info("UserName: {} and jobId:{}", userEmail, jobId);
         List<InfluxData> measurementData = influxIOService.monitorMeasurement(userEmail, jobId);
         BatchJobData jobData = jobService.getJobStat(jobId);
         monitorData.setJobData(jobData);

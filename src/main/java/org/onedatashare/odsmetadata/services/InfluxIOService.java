@@ -2,20 +2,18 @@ package org.onedatashare.odsmetadata.services;
 
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.QueryApi;
-import com.influxdb.client.domain.OnboardingRequest;
-import com.influxdb.client.domain.OnboardingResponse;
-import com.influxdb.exceptions.UnprocessableEntityException;
 import com.influxdb.query.dsl.Flux;
 import com.influxdb.query.dsl.functions.restriction.Restrictions;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +48,7 @@ public class InfluxIOService {
     }
 
     @PostConstruct
-    public void postConstruct(){
+    public void postConstruct() {
         this.queryApi = this.influxDBClient.getQueryApi();
     }
 
@@ -90,7 +88,7 @@ public class InfluxIOService {
                 .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
         String fluxStr = flux.toString();
         logger.info("Vfs Flux Query = {}", fluxStr);
-        return  queryApi.query(fluxStr, InfluxData.class);
+        return queryApi.query(fluxStr, InfluxData.class);
     }
 
     /**
@@ -114,7 +112,7 @@ public class InfluxIOService {
         return data;
     }
 
-    public List<InfluxData> queryVfsBucketWithJobId(Long jobId, String userName){
+    public List<InfluxData> queryVfsBucketWithJobId(Long jobId, String userName) {
         if (this.influxDBClient.getBucketsApi().findBucketByName(userName) == null) {
             return new ArrayList<>();
         }
@@ -207,17 +205,28 @@ public class InfluxIOService {
         }
     }
 
-    public void onboardOdsUser(String username, String password) {
-        OnboardingRequest onboardingRequest = new OnboardingRequest();
-        onboardingRequest.setBucket(username);
-        onboardingRequest.setOrg(this.influxOrg);
-        onboardingRequest.setPassword(password);
-        onboardingRequest.setUsername(username);
-        onboardingRequest.setToken(this.token);
-        try {
-            OnboardingResponse response = this.influxDBClient.onBoarding(onboardingRequest);
-        } catch (UnprocessableEntityException e) {
-            logger.error("We already created this user {}", onboardingRequest.getUsername());
+
+    public List<InfluxData> getMeasurementsPerNode(String userEmail, String appId, Long jobId, LocalDateTime start) {
+        String applicationId = userEmail + "-" + appId;
+        Instant startTime = start.toInstant(ZoneOffset.UTC);
+        logger.info(applicationId);
+        logger.info(jobId.toString());
+        logger.info(startTime.toString());
+        if (this.influxDBClient.getBucketsApi().findBucketByName(userEmail) == null) {
+            return null;
         }
+
+        Restrictions vfsRestrictions = Restrictions.and(
+                Restrictions.measurement().equal(MEASUREMENT),
+                Restrictions.tag("APP_NAME").equal(applicationId),
+                Restrictions.tag(ODS_JOB_ID).equal(String.valueOf(jobId))
+        );
+        Flux fluxQuery = Flux.from(userEmail)
+                .range(startTime)
+                .filter(vfsRestrictions)
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+
+        return queryApi.query(fluxQuery.toString(), InfluxData.class);
+
     }
 }
