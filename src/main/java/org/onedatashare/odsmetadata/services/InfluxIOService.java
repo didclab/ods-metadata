@@ -17,6 +17,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class InfluxIOService {
@@ -28,6 +29,8 @@ public class InfluxIOService {
     private final String ODS_USER = "ods_user";
     private final String ODS_JOB_ID = "jobId";
     private final String MEASUREMENT = "transfer_data";
+
+    private final String JOB_UUID = "jobUuid";
 
     private final String defaultBucket = "OdsTransferNodes";
 
@@ -103,7 +106,7 @@ public class InfluxIOService {
                 Restrictions.tag(ODS_USER).equal(userName),
                 Restrictions.tag(ODS_JOB_ID).equal(jobId)
         );
-        Flux fluxQuery = Flux.from(defaultBucket)
+        Flux fluxQuery = Flux.from(userName)
                 .range(-1L, ChronoUnit.CENTURIES)
                 .filter(globalRestrictions)
                 .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
@@ -228,5 +231,17 @@ public class InfluxIOService {
 
         return queryApi.query(fluxQuery.toString(), InfluxData.class);
 
+    }
+
+    public List<InfluxData> getJobViaUuid(String userEmail, UUID jobUuid) {
+        logger.info("Job UUID {}", jobUuid);
+        Restrictions restrictions = Restrictions.and(
+                Restrictions.tag(JOB_UUID).equal(jobUuid.toString())
+        );
+        Flux fluxQuery = Flux.from(userEmail)
+                .range(-1L, ChronoUnit.CENTURIES)
+                .filter(restrictions)
+                .pivot(new String[]{"_time"}, new String[]{"_field"}, "_value");
+        return queryApi.query(fluxQuery.toString(), InfluxData.class);
     }
 }

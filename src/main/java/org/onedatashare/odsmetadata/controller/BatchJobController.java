@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -183,6 +184,12 @@ public class BatchJobController {
         log.info(jobId.toString());
         List<InfluxData> data = influxIOService.getUserJobInfluxData(jobId, userEmail);
         data.addAll(influxIOService.queryVfsBucketWithJobId(jobId, userEmail));
+        return data;
+    }
+
+    @GetMapping("/stats/influx/uuid")
+    public List<InfluxData> getJobMeasurementsUuid(@RequestParam String userEmail, @RequestParam UUID jobUuid) {
+        List<InfluxData> data = influxIOService.getJobViaUuid(userEmail, jobUuid);
         return data;
     }
 
