@@ -61,6 +61,23 @@ public class BatchJobController {
         return userEmailList;
     }
 
+    @GetMapping("/uuids")
+    public List<UUID> getUserUuids(@RequestParam String userEmail){
+        List<UUID> userUuids = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        if(validateUserEmail(userEmail)){
+            userUuids = jobService.getUserUuids(userEmail);
+        }
+        return userUuids;
+    }
+
+    @GetMapping("/job/uuid")
+    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid){
+        List<BatchJobData> jobDataList = new ArrayList<>();
+        jobDataList = jobService.getBatchDataFromUuids(jobUuid);
+        return jobDataList;
+    }
+
     /**
      * This is a bulk API call so if the user wants all information on all their jobs this is the right call
      *
