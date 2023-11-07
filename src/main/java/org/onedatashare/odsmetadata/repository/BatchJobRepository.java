@@ -16,15 +16,15 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
 
     BatchJobExecution findBatchJobExecutionById(Long id);
 
-    BatchJobExecution findByStartTimeAndBatchJobParams_StringVal(Date date, String userId);
+    BatchJobExecution findByStartTimeAndBatchJobParams_ParameterValueLike(Date date, String userId);
 
     //Make Pageable
-    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_StringValLike(Date startTime, Date endTime, String userId);
+    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId);
 
-    List<BatchJobExecution> findAllByBatchJobParams_StringValLike(String userId);
+    List<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId);
 
     //Pageable version
-    List<BatchJobExecution> findAllByBatchJobParams_StringValLike(String userId, Pageable pr);
+    List<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId, Pageable pr);
 
-    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_StringValLike(Date startTime, Date endTime, String userId, Pageable pr);
+    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId, Pageable pr);
 }

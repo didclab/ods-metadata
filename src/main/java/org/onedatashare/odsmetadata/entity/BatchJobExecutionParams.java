@@ -21,24 +21,20 @@ public class BatchJobExecutionParams {
     @JsonIgnore
     private BatchJobExecution batchJob;
 
-    @Column(name="type_cd")
-    private String typeCd;
+    @Column(name="parameter_type")
+    private String parameterType;
 
-    @Column(name="key_name")
-    private String keyName;
+    @Column(name="parameter_name")
+    private String parameterName;
 
-    @Column(name="string_val")
-    private String stringVal;
-
-    @Column(name="date_val")
-    private Timestamp dateVal;
-
-    @Column(name="long_val")
-    private Long longVal;
-
-    @Column(name="double_val")
-    private Float doubleVal;
+    @Column(name="parameter_value")
+    private String parameterValue;
 
     @Column(name="identifying")
     private Character identifying;
+
+    @Override
+    public String toString(){
+        return this.parameterName + ":" + this.parameterValue;
+    }
 }
