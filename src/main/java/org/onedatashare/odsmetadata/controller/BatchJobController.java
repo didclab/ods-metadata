@@ -262,6 +262,8 @@ public class BatchJobController {
         List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
         TransferSummary summary = new TransferSummary();
         summary.updateSummary(measurementData);
+        List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
+        summary.setTransferStatus(jobData.get(0).getStatus());
         return summary;
     }
 }
