@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.MonitorData;
+import org.onedatashare.odsmetadata.model.TransferSummary;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,17 +63,17 @@ public class BatchJobController {
     }
 
     @GetMapping("/uuids")
-    public List<UUID> getUserUuids(@RequestParam String userEmail){
+    public List<UUID> getUserUuids(@RequestParam String userEmail) {
         List<UUID> userUuids = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
-        if(validateUserEmail(userEmail)){
+        if (validateUserEmail(userEmail)) {
             userUuids = jobService.getUserUuids(userEmail);
         }
         return userUuids;
     }
 
     @GetMapping("/job/uuid")
-    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid){
+    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid) {
         List<BatchJobData> jobDataList = new ArrayList<>();
         jobDataList = jobService.getBatchDataFromUuids(jobUuid);
         return jobDataList;
@@ -254,5 +255,13 @@ public class BatchJobController {
         monitorData.setJobData(jobData);
         monitorData.setMeasurementData(measurementData);
         return monitorData;
+    }
+
+    @GetMapping("/summary")
+    public TransferSummary jobMonitor(@RequestParam String userEmail, @RequestParam UUID jobUuid) {
+        List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
+        TransferSummary summary = new TransferSummary();
+        summary.updateSummary(measurementData);
+        return summary;
     }
 }
