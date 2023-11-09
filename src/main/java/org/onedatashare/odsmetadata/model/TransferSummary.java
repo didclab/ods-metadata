@@ -1,8 +1,6 @@
 package org.onedatashare.odsmetadata.model;
 
 import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.DoubleSummaryStatistics;
 import java.util.List;
@@ -16,6 +14,7 @@ public class TransferSummary {
     double averageWriteThroughput;
     double progressPercentage;
     long jobSize;
+    String transferStatus;
 
     public void updateSummary(List<InfluxData> jobMeasurements) {
         DoubleSummaryStatistics readStat = new DoubleSummaryStatistics();
