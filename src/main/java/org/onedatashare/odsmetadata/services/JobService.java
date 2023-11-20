@@ -24,17 +24,21 @@ import java.util.stream.Collectors;
 @Service
 public class JobService {
 
-    @Autowired
-    BatchJobRepository batchJobRepository;
+    private BatchJobRepository batchJobRepository;
 
-    @Autowired
-    BatchJobParamRepository batchJobParamRepository;
+    private BatchJobParamRepository batchJobParamRepository;
 
     private BatchJobMapper mapper = Mappers.getMapper(BatchJobMapper.class);
 
     private static final String STRING_VAL = "STRING";
     private static final String LONG_VAL = "LONG";
     private static final String DOUBLE_VAL = "DOUBLE";
+
+    @Autowired
+    public JobService(BatchJobParamRepository batchJobParamRepository, BatchJobRepository batchJobRepository) {
+        this.batchJobParamRepository = batchJobParamRepository;
+        this.batchJobRepository = batchJobRepository;
+    }
 
     public BatchJobData getJobStat(Long jobId) {
         log.info("JobId: {}", jobId);
