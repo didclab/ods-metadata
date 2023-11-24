@@ -3,7 +3,7 @@ package org.onedatashare.odsmetadata.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.sql.Timestamp;
 @Data
 @Entity
