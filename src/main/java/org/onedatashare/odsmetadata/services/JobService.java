@@ -134,6 +134,15 @@ public class JobService {
         return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
     }
 
+    public List<BatchJobExecution> getBatchJobDetailsBasedOnEmailAndType(String userEmail, String type){
+
+        List<BatchJobExecution> batchJobDetails = batchJobRepository
+                                        .findBatchJobExecutionByEmailAndSourceAndDestinationType(userEmail, type);
+        log.info("test : {}", batchJobDetails);
+        return batchJobDetails;
+
+    }
+
     private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {
         if (!CollectionUtils.isEmpty(batchJobExecutions)) {
             batchJobExecutions.stream().forEach(batchJobExecution -> {

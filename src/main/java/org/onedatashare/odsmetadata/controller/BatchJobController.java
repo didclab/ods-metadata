@@ -1,5 +1,6 @@
 package org.onedatashare.odsmetadata.controller;
 
+
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -265,5 +267,21 @@ public class BatchJobController {
         List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
         summary.setTransferStatus(jobData.get(0).getStatus());
         return summary;
+    }
+
+    @GetMapping("/user_batchJobs")
+    public List<BatchJobExecution> getBatchJobBasedOnEmailAndType(@RequestParam String userEmail,
+                                                                  @RequestParam String type) {
+
+        List<BatchJobExecution> batchJobDetails = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        Preconditions.checkNotNull(type);
+        log.info(userEmail);
+        log.info(type);
+        if (validateUserEmail(userEmail)) {
+            batchJobDetails = jobService.getBatchJobDetailsBasedOnEmailAndType(userEmail, type);
+        }
+
+        return batchJobDetails;
     }
 }
