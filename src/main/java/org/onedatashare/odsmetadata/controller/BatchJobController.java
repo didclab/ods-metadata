@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.model.InfluxData;
 import org.onedatashare.odsmetadata.model.MonitorData;
+import org.onedatashare.odsmetadata.model.TransferSummary;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -58,6 +60,23 @@ public class BatchJobController {
             userEmailList = jobService.getUserJobIds(userEmail);
         }
         return userEmailList;
+    }
+
+    @GetMapping("/uuids")
+    public List<UUID> getUserUuids(@RequestParam String userEmail) {
+        List<UUID> userUuids = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        if (validateUserEmail(userEmail)) {
+            userUuids = jobService.getUserUuids(userEmail);
+        }
+        return userUuids;
+    }
+
+    @GetMapping("/job/uuid")
+    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid) {
+        List<BatchJobData> jobDataList = new ArrayList<>();
+        jobDataList = jobService.getBatchDataFromUuids(jobUuid);
+        return jobDataList;
     }
 
     /**
@@ -186,6 +205,12 @@ public class BatchJobController {
         return data;
     }
 
+    @GetMapping("/stats/influx/uuid")
+    public List<InfluxData> getJobMeasurementsUuid(@RequestParam String userEmail, @RequestParam UUID jobUuid) {
+        List<InfluxData> data = influxIOService.getJobViaUuid(userEmail, jobUuid);
+        return data;
+    }
+
     @GetMapping("/stats/influx/transfer/node")
     public List<InfluxData> getJobMeasurementsUniversal(@RequestParam String userEmail, @RequestParam String appId, @RequestParam Long jobId, @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start) {
         return influxIOService.getMeasurementsPerNode(userEmail, appId, jobId, start);
@@ -230,5 +255,15 @@ public class BatchJobController {
         monitorData.setJobData(jobData);
         monitorData.setMeasurementData(measurementData);
         return monitorData;
+    }
+
+    @GetMapping("/summary")
+    public TransferSummary jobMonitor(@RequestParam String userEmail, @RequestParam UUID jobUuid) {
+        List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
+        TransferSummary summary = new TransferSummary();
+        summary.updateSummary(measurementData);
+        List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
+        summary.setTransferStatus(jobData.get(0).getStatus());
+        return summary;
     }
 }

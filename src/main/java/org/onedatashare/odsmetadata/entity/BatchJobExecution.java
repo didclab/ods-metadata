@@ -43,9 +43,6 @@ public class BatchJobExecution {
     @Column(name="last_updated")
     private Timestamp lastUpdated;
 
-    @Column(name="job_configuration_location")
-    private String jobConfigLocation;
-
     @OneToMany(mappedBy = "batchJob")
     List<BatchStepExecution> batchSteps;
 

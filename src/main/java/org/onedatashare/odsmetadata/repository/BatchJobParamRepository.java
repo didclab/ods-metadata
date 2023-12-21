@@ -15,5 +15,5 @@ public interface BatchJobParamRepository extends JpaRepository<BatchJobExecution
 
     List<BatchJobExecutionParams> findBatchJobExecutionParamsByJobExecutionId(Long id);
 
-    List<BatchJobExecutionParams> findBatchJobExecutionParamsByStringValLike(String userId);
+    List<BatchJobExecutionParams> findBatchJobExecutionParamsByParameterValueLike(String parameterValue);
 }
