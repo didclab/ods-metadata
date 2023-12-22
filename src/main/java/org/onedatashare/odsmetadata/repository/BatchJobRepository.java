@@ -30,6 +30,8 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
 
     List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId, Pageable pr);
 
+    List<BatchJobExecution> findByBatchJobParams_ParameterValueIn(List<String> paramValues);
+
     @Query("SELECT DISTINCT j FROM BatchJobExecution j " +
             "INNER JOIN j.batchJobParams p " +
             "INNER JOIN j.batchJobParams p2 " +
