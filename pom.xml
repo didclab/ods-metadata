@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.6.2</version>
+        <version>3.1.0</version>
         <relativePath/>
     </parent>
     <groupId>org.onedatashare</groupId>
@@ -14,8 +14,8 @@
     <name>ods-metadata</name>
     <description>OneDataShare Service that exposes the Data in CDB to other services.</description>
     <properties>
-        <java.version>11</java.version>
-        <spring-cloud.version>2021.0.0</spring-cloud.version>
+        <java.version>21</java.version>
+        <spring-cloud.version>2022.0.3</spring-cloud.version>
     </properties>
     <dependencies>
         <dependency>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-            <version>3.1.0</version>
+            <version>4.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -79,7 +79,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.24</version>
+            <version>1.18.30</version>		
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -98,12 +98,12 @@
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-            <version>2.0.2</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>5.3.16</version>
+            <version>6.0.9</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -133,7 +133,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.10.1</version>
+                <version>3.11.0</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
@@ -146,7 +146,7 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>1.18.24</version>
+                            <version>1.18.30</version>
                         </path>
                         <path>
                             <groupId>org.projectlombok</groupId>

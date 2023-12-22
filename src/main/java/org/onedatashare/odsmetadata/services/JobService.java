@@ -134,6 +134,35 @@ public class JobService {
         return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
     }
 
+    public List<BatchJobExecution> getBatchJobDetailsBasedOnEmailAndType(String userEmail, String type){
+
+        List<BatchJobExecution> batchJobDetails = batchJobRepository
+                                        .findBatchJobExecutionByEmailAndSourceAndDestinationType(userEmail, type);
+        return batchJobDetails;
+
+    }
+
+    public List<BatchJobExecution> getBatchJobExecutionByParameterMap(Map<String, String> paramMap){
+
+        List<String> paramValues = paramMap.values().stream()
+                                    .filter(value -> value != null && !value.isEmpty())
+                                    .collect(Collectors.toList());
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByBatchJobParams_ParameterValueIn(paramValues);
+        List<BatchJobExecution> filteredJobs = batchJobExecutions.stream()
+                                                .filter(job -> matchesParameterMap(job, paramMap))
+                                                .collect(Collectors.toList());
+        return filteredJobs;
+    }
+
+    private boolean matchesParameterMap(BatchJobExecution job, Map<String, String> paramMap) {
+
+        List<BatchJobExecutionParams> jobParams = job.getBatchJobParams();
+
+        return paramMap.entrySet().stream().allMatch(entry -> jobParams.stream()
+                        .anyMatch(param -> param.getParameterName().equals(entry.getKey())
+                                && param.getParameterValue().equals(entry.getValue())));
+    }
+
     private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {
         if (!CollectionUtils.isEmpty(batchJobExecutions)) {
             batchJobExecutions.stream().forEach(batchJobExecution -> {

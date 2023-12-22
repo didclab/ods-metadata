@@ -1,5 +1,6 @@
 package org.onedatashare.odsmetadata.controller;
 
+
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
 import org.onedatashare.odsmetadata.model.BatchJobData;
@@ -14,16 +15,12 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -265,5 +262,31 @@ public class BatchJobController {
         List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
         summary.setTransferStatus(jobData.get(0).getStatus());
         return summary;
+    }
+
+    @GetMapping("/user_batchJobs")
+    public List<BatchJobExecution> getBatchJobBasedOnEmailAndType(@RequestParam String userEmail,
+                                                                  @RequestParam String type) {
+
+        List<BatchJobExecution> batchJobDetails = new ArrayList<>();
+        Preconditions.checkNotNull(userEmail);
+        Preconditions.checkNotNull(type);
+        log.info(userEmail);
+        log.info(type);
+        if (validateUserEmail(userEmail)) {
+            batchJobDetails = jobService.getBatchJobDetailsBasedOnEmailAndType(userEmail, type);
+        }
+
+        return batchJobDetails;
+    }
+
+    @GetMapping("/jobs/param_map")
+    public List<BatchJobExecution> getDistinctBatchJobsByParameterValues(@RequestBody HashMap<String, String> paramMap) {
+
+        log.info("test values : {}", paramMap);
+        List<BatchJobExecution> batchJobDetails = new ArrayList<>();
+        Preconditions.checkNotNull(paramMap);
+        batchJobDetails = jobService.getBatchJobExecutionByParameterMap(paramMap);
+        return batchJobDetails;
     }
 }
