@@ -2,6 +2,7 @@ package org.onedatashare.odsmetadata.repository;
 
 import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 import org.onedatashare.odsmetadata.entity.BatchJobExecutionParams;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -24,7 +25,7 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
     List<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId);
 
     //Pageable version
-    List<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId, Pageable pr);
+    Page<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId, Pageable pr);
 
     List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId, Pageable pr);
 }
