@@ -1,12 +1,8 @@
 package org.onedatashare.odsmetadata.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.influxdb.annotations.Column;
 import com.influxdb.annotations.Measurement;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 @Measurement(name = "transfer_data")
