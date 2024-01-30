@@ -8,7 +8,6 @@ import org.onedatashare.odsmetadata.model.MonitorData;
 import org.onedatashare.odsmetadata.model.TransferSummary;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -33,11 +32,14 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping(value = "/api/v1/meta", produces = MediaType.APPLICATION_JSON_VALUE)
 public class BatchJobController {
-    @Autowired
     JobService jobService;
 
-    @Autowired
     InfluxIOService influxIOService;
+
+    public BatchJobController(JobService jobService, InfluxIOService influxIOService) {
+        this.jobService = jobService;
+        this.influxIOService = influxIOService;
+    }
 
     private static final String REGEX_PATTERN = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)*@"
             + "[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$"; //this is used to validate that the userEmail is an email
@@ -111,15 +113,9 @@ public class BatchJobController {
 
     @GetMapping("/stat/page")
     public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable) {
-        List<BatchJobData> allJobStatsOfUser = new ArrayList<>();
-        Page<BatchJobData> ret = new PageImpl<>(allJobStatsOfUser);
         Preconditions.checkNotNull(userEmail);
         Preconditions.checkNotNull(pageable);
-        log.info(userEmail);
-        if (validateUserEmail(userEmail)) {
-            ret = jobService.getAllJobStatisticsOfUser(userEmail, pageable);
-        }
-        return ret;
+        return jobService.getAllJobStatisticsOfUser(userEmail, pageable);
     }
 
     /**

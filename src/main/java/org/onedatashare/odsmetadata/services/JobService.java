@@ -9,7 +9,6 @@ import org.onedatashare.odsmetadata.mapper.BatchJobMapper;
 import org.onedatashare.odsmetadata.model.BatchJobData;
 import org.onedatashare.odsmetadata.repository.BatchJobParamRepository;
 import org.onedatashare.odsmetadata.repository.BatchJobRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -24,17 +23,17 @@ import java.util.stream.Collectors;
 @Service
 public class JobService {
 
-    @Autowired
     BatchJobRepository batchJobRepository;
 
-    @Autowired
     BatchJobParamRepository batchJobParamRepository;
 
-    private BatchJobMapper mapper = Mappers.getMapper(BatchJobMapper.class);
+    private BatchJobMapper mapper;
 
-    private static final String STRING_VAL = "STRING";
-    private static final String LONG_VAL = "LONG";
-    private static final String DOUBLE_VAL = "DOUBLE";
+    public JobService(BatchJobRepository batchJobRepository, BatchJobParamRepository batchJobParamRepository) {
+        this.batchJobRepository = batchJobRepository;
+        this.batchJobParamRepository = batchJobParamRepository;
+        this.mapper = Mappers.getMapper(BatchJobMapper.class);
+    }
 
     public BatchJobData getJobStat(Long jobId) {
         log.info("JobId: {}", jobId);
@@ -87,11 +86,10 @@ public class JobService {
 
     public Page<BatchJobData> getAllJobStatisticsOfUser(String userId, Pageable pr) {
         log.info("UserId={}, Pageable={}", userId, pr);
-        List<BatchJobData> batchJobDataList = new ArrayList<>();
-        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterValueLike(userId, pr);
-        processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
-        log.info("Total jobs for user:" + batchJobDataList.size());
-        return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
+        Page<BatchJobExecution> page = batchJobRepository.findAllByBatchJobParams_ParameterValueLike(userId, pr);
+        List<BatchJobData> batchJobData = new ArrayList<>();
+        processBatchJobExecutionData(batchJobData, page.getContent());
+        return new PageImpl<>(batchJobData, page.getPageable(), page.getTotalElements());
     }
 
     public BatchJobData getUserJobsByDate(String userId, Instant date) {

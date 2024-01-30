@@ -5,8 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.0</version>
-        <relativePath/>
+        <version>3.2.2</version>
     </parent>
     <groupId>org.onedatashare</groupId>
     <artifactId>ods-metadata</artifactId>
@@ -15,36 +14,29 @@
     <description>OneDataShare Service that exposes the Data in CDB to other services.</description>
     <properties>
         <java.version>21</java.version>
-        <spring-cloud.version>2022.0.3</spring-cloud.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>com.influxdb</groupId>
             <artifactId>influxdb-client-java</artifactId>
-            <version>6.3.0</version>
+            <version>6.12.0</version>
         </dependency>
         <dependency>
             <groupId>com.influxdb</groupId>
             <artifactId>flux-dsl</artifactId>
-            <version>6.3.0</version>
+            <version>6.12.0</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>org.influxdb</groupId>-->
-<!--            <artifactId>influxdb-java</artifactId>-->
-<!--            <version>2.22</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
-            <version>4.10.0</version>
+            <version>4.12.0</version>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>logging-interceptor</artifactId>
-            <version>4.10.0</version>
+            <version>4.12.0</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -64,7 +56,6 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-            <version>4.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -79,7 +70,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version>		
+            <version>1.18.30</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -89,7 +80,7 @@
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>1.5.2.Final</version>
+            <version>1.5.5.Final</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -103,7 +94,6 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>6.0.9</version>
         </dependency>
     </dependencies>
     <dependencyManagement>
@@ -141,7 +131,7 @@
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
-                            <version>1.5.2.Final</version>
+                            <version>1.5.5.Final</version>
                         </path>
                         <path>
                             <groupId>org.projectlombok</groupId>
