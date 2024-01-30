@@ -2,7 +2,6 @@ package org.onedatashare.odsmetadata.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.sql.Timestamp;
 import java.util.List;
 
