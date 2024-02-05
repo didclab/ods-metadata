@@ -50,13 +50,11 @@ public class JobService {
     }
 
     public List<Long> getUserJobIds(String userId) {
-        log.info(userId);
-        List<Long> userJobIds = new ArrayList<>();
         List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByParameterValueLike(userId);
-        if (!CollectionUtils.isEmpty(batchJobExecutionParams)) {
-            userJobIds = batchJobExecutionParams.stream().map(BatchJobExecutionParams::getJobExecutionId).collect(Collectors.toList());
-        }
-        return userJobIds;
+        return batchJobExecutionParams.stream()
+                    .map(BatchJobExecutionParams::getJobExecutionId)
+                    .distinct()
+                    .collect(Collectors.toList());
     }
 
     public List<UUID> getUserUuids(String userEmail) {
