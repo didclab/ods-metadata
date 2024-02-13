@@ -17,15 +17,15 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
 
     BatchJobExecution findBatchJobExecutionById(Long id);
 
-    BatchJobExecution findByStartTimeAndBatchJobParams_ParameterValueLike(Date date, String userId);
+    Page<BatchJobExecution> findByStartTimeAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date date, String parameterName, String userId, Pageable pg);
 
     //Make Pageable
-    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId);
+    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String ParameterName, String userId);
 
-    List<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId);
+    List<BatchJobExecution> findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(String parameterName, String userId);
 
     //Pageable version
-    Page<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId, Pageable pr);
+    Page<BatchJobExecution> findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(String parameterName, String userId, Pageable pr);
 
-    List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId, Pageable pr);
+    Page<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String parameterName, String userId, Pageable pr);
 }

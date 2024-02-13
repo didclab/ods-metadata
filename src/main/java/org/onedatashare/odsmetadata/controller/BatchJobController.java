@@ -54,31 +54,30 @@ public class BatchJobController {
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public List<Long> getUserJobIds(@RequestParam String userEmail) {
+    public Page<Long> getUserJobIds(@RequestParam String userEmail, Pageable page) {
         List<Long> userEmailList = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
         log.info(userEmail);
         if (validateUserEmail(userEmail)) {
-            userEmailList = jobService.getUserJobIds(userEmail);
+            return jobService.getUserJobIds(userEmail, page);
         }
-        return userEmailList;
+        return new PageImpl<>(userEmailList, page, userEmailList.size());
     }
 
     @GetMapping("/uuids")
-    public List<UUID> getUserUuids(@RequestParam String userEmail) {
+    public Page<UUID> getUserUuids(@RequestParam String userEmail, Pageable page) {
         List<UUID> userUuids = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
         if (validateUserEmail(userEmail)) {
-            userUuids = jobService.getUserUuids(userEmail);
+            return jobService.getUserUuids(userEmail, page);
         }
-        return userUuids;
+        return new PageImpl<>(userUuids, page, userUuids.size());
     }
 
     @GetMapping("/job/uuid")
-    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid) {
-        List<BatchJobData> jobDataList = new ArrayList<>();
-        jobDataList = jobService.getBatchDataFromUuids(jobUuid);
-        return jobDataList;
+    public Page<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid, Pageable page) {
+        Preconditions.checkNotNull(jobUuid);
+        return jobService.getBatchDataFromUuids(jobUuid, page);
     }
 
     /**
@@ -140,15 +139,18 @@ public class BatchJobController {
      * @return
      */
     @GetMapping("/stat/date")
-    public BatchJobData getUserJobsByDate(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date) {
+    public Page<BatchJobData> getUserJobsByDate(@RequestParam String userEmail,
+                                          @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+                                          Pageable page) {
         log.info(userEmail);
         log.info(date.toString());
-        BatchJobData batchJobData = new BatchJobData();
+        List<BatchJobData> batchJobData = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
+        Preconditions.checkNotNull(date);
         if (validateUserEmail(userEmail)) {
-            batchJobData = jobService.getUserJobsByDate(userEmail, date.toInstant(ZoneOffset.UTC));
+            return jobService.getUserJobsByDate(userEmail, date.toInstant(ZoneOffset.UTC), page);
         }
-        return batchJobData;
+        return new PageImpl<>(batchJobData, page, 0);
     }
 
     /**
