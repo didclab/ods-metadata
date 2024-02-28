@@ -5,6 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+
 
 import java.util.Date;
 import java.util.List;
@@ -26,4 +29,11 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
     Page<BatchJobExecution> findAllByBatchJobParams_ParameterValueLike(String userId, Pageable pr);
 
     List<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String userId, Pageable pr);
+
+    @Modifying
+    @Query("delete from BatchJobExecution b where b.id = :id")
+    void deleteBatchJobExecutionById(Long id);
+
+
+
 }

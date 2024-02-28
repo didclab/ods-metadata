@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
@@ -47,6 +48,11 @@ public class JobService {
             }
         }
         return batchJobData;
+    }
+    @Transactional
+    public void deleteJob(Long jobId){
+        batchJobRepository.deleteBatchJobExecutionById(jobId);
+
     }
 
     public List<Long> getUserJobIds(String userId) {
