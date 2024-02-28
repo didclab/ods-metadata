@@ -133,6 +133,11 @@ public class BatchJobController {
         return batchJobData;
     }
 
+    @GetMapping("/deletejob")
+    public void deleteJob(@RequestParam Long jobId) {
+        log.info("Deleting job:{}",jobId.toString());
+        jobService.deleteJob(jobId);
+    }
 
     /**
      * @param userEmail
