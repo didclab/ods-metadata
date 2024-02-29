@@ -55,30 +55,19 @@ public class BatchJobController {
      */
     @GetMapping("/user_jobs")
     public List<Long> getUserJobIds(@RequestParam String userEmail) {
-        List<Long> userEmailList = new ArrayList<>();
-        Preconditions.checkNotNull(userEmail);
-        log.info(userEmail);
-        if (validateUserEmail(userEmail)) {
-            userEmailList = jobService.getUserJobIds(userEmail);
-        }
-        return userEmailList;
+        return jobService.getUserJobIds(userEmail);
     }
 
     @GetMapping("/uuids")
     public List<UUID> getUserUuids(@RequestParam String userEmail) {
-        List<UUID> userUuids = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
-        if (validateUserEmail(userEmail)) {
-            userUuids = jobService.getUserUuids(userEmail);
-        }
-        return userUuids;
+        return jobService.getUserUuids(userEmail);
     }
 
     @GetMapping("/job/uuid")
-    public List<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid) {
-        List<BatchJobData> jobDataList = new ArrayList<>();
-        jobDataList = jobService.getBatchDataFromUuids(jobUuid);
-        return jobDataList;
+    public BatchJobData getBatchJobByUuid(@RequestParam UUID jobUuid) {
+        Preconditions.checkNotNull(jobUuid);
+        return jobService.getBatchDataFromUuids(jobUuid);
     }
 
     /**
@@ -140,15 +129,18 @@ public class BatchJobController {
      * @return
      */
     @GetMapping("/stat/date")
-    public BatchJobData getUserJobsByDate(@RequestParam String userEmail, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date) {
+    public Page<BatchJobData> getUserJobsByDate(@RequestParam String userEmail,
+                                          @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime date,
+                                          Pageable page) {
         log.info(userEmail);
         log.info(date.toString());
-        BatchJobData batchJobData = new BatchJobData();
+        List<BatchJobData> batchJobData = new ArrayList<>();
         Preconditions.checkNotNull(userEmail);
+        Preconditions.checkNotNull(date);
         if (validateUserEmail(userEmail)) {
-            batchJobData = jobService.getUserJobsByDate(userEmail, date.toInstant(ZoneOffset.UTC));
+            return jobService.getUserJobsByDate(userEmail, date.toInstant(ZoneOffset.UTC), page);
         }
-        return batchJobData;
+        return new PageImpl<>(batchJobData, page, 0);
     }
 
     /**
@@ -258,8 +250,8 @@ public class BatchJobController {
         List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
         TransferSummary summary = new TransferSummary();
         summary.updateSummary(measurementData);
-        List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
-        summary.setTransferStatus(jobData.get(0).getStatus());
+        BatchJobData jobData = jobService.getBatchDataFromUuids(jobUuid);
+        summary.setTransferStatus(jobData.getStatus());
         return summary;
     }
 }

@@ -29,6 +29,10 @@ public class JobService {
 
     private BatchJobMapper mapper;
 
+    private final String emailParameterName = "ownerId";
+
+    private final String jobUuidParameterName = "jobUuid";
+
     public JobService(BatchJobRepository batchJobRepository, BatchJobParamRepository batchJobParamRepository) {
         this.batchJobRepository = batchJobRepository;
         this.batchJobParamRepository = batchJobParamRepository;
@@ -50,17 +54,16 @@ public class JobService {
     }
 
     public List<Long> getUserJobIds(String userId) {
-        List<BatchJobExecutionParams> batchJobExecutionParams = batchJobParamRepository.findBatchJobExecutionParamsByParameterValueLike(userId);
-        return batchJobExecutionParams.stream()
-                    .map(BatchJobExecutionParams::getJobExecutionId)
-                    .distinct()
-                    .collect(Collectors.toList());
+        return batchJobParamRepository.findBatchJobExecutionParamsByParameterNameAndParameterValueLike(emailParameterName, userId)
+                .stream()
+                .map(BatchJobExecutionParams::getJobExecutionId)
+                .collect(Collectors.toList());
     }
 
     public List<UUID> getUserUuids(String userEmail) {
         List<UUID> jobUuids = new ArrayList<>();
         List<BatchJobData> batchJobDataList = new ArrayList<>();
-        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterValueLike(userEmail);
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(emailParameterName, userEmail);
         processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
         for (BatchJobData data : batchJobDataList) {
             String jobUuid = data.getJobParameters().get("jobUuid");
@@ -76,58 +79,58 @@ public class JobService {
     public List<BatchJobData> getAllJobStatisticsOfUser(String userId) {
         log.info(userId);
         List<BatchJobData> batchJobDataList = new ArrayList<>();
-        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterValueLike(userId);
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(emailParameterName, userId);
         processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
         log.info("Total jobs for user:" + batchJobDataList.size());
         return batchJobDataList;
     }
 
     public Page<BatchJobData> getAllJobStatisticsOfUser(String userId, Pageable pr) {
-        log.info("UserId={}, Pageable={}", userId, pr);
-        Page<BatchJobExecution> page = batchJobRepository.findAllByBatchJobParams_ParameterValueLike(userId, pr);
+        Page<BatchJobExecution> page = batchJobRepository.findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(emailParameterName, userId, pr);
         List<BatchJobData> batchJobData = new ArrayList<>();
         processBatchJobExecutionData(batchJobData, page.getContent());
         return new PageImpl<>(batchJobData, page.getPageable(), page.getTotalElements());
     }
 
-    public BatchJobData getUserJobsByDate(String userId, Instant date) {
+    public Page<BatchJobData> getUserJobsByDate(String userId, Instant date, Pageable pg) {
         log.info(date.toString());
         log.info(Date.from(date).toString());
-        BatchJobData batchJobData = new BatchJobData();
-        BatchJobExecution batchJobExecution = batchJobRepository.findByStartTimeAndBatchJobParams_ParameterValueLike(Date.from(date), userId);
-        if (Objects.nonNull(batchJobExecution)) {
-            batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
-            if (!CollectionUtils.isEmpty(batchJobExecution.getBatchJobParams())) {
+        List<BatchJobData> batchJobDatalist = new ArrayList<>();
+        Page<BatchJobExecution> page = batchJobRepository.findByStartTimeAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date.from(date), emailParameterName, userId, pg);
+        if (Objects.nonNull(page)) {
+            page.getContent().stream().forEach(batchJobExecution -> {
+                BatchJobData batchJobData = mapper.mapBatchJobEntityToModel(batchJobExecution);
                 batchJobData.setJobParameters(mapJobParameters(batchJobExecution.getBatchJobParams()));
-            }
+                batchJobDatalist.add(batchJobData);
+            });
         }
-        return batchJobData;
+        return new PageImpl<>(batchJobDatalist, page.getPageable(), batchJobDatalist.size());
     }
 
     public List<BatchJobData> getUserJobsByDateRange(String userId, Instant from, Instant to) {
         List<BatchJobData> batchJobDataList = new ArrayList<>();
-        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date.from(from), Date.from(to), userId);
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date.from(from), Date.from(to), emailParameterName, userId);
         processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
         return batchJobDataList;
     }
 
-    public List<BatchJobData> getBatchDataFromUuids(UUID jobUuid) {
-        List<BatchJobData> retList = new ArrayList<>();
-        List<BatchJobExecution> executions = new ArrayList<>();
-        List<BatchJobExecutionParams> params = batchJobParamRepository.findBatchJobExecutionParamsByParameterValueLike(jobUuid.toString());
-        executions = params.stream().map(param -> {
-            return this.batchJobRepository.findBatchJobExecutionById(param.getJobExecutionId());
-        }).collect(Collectors.toList());
-        processBatchJobExecutionData(retList, executions);
-        return retList;
+    //pageable version
+    public BatchJobData getBatchDataFromUuids(UUID jobUuid) {
+        BatchJobExecutionParams jobParam = batchJobParamRepository.findBatchJobExecutionParamsByParameterNameLikeAndParameterValueLike(jobUuidParameterName, jobUuid.toString());
+        BatchJobExecution jobData = batchJobRepository.findBatchJobExecutionById(jobParam.getJobExecutionId());
+        BatchJobData batchJobData = mapper.mapBatchJobEntityToModel(jobData);
+        if (!CollectionUtils.isEmpty(jobData.getBatchJobParams())) {
+            batchJobData.setJobParameters(mapJobParameters(jobData.getBatchJobParams()));
+        }
+        return batchJobData;
     }
 
 
     public Page<BatchJobData> getUserJobsByDateRange(String userId, Instant from, Instant to, Pageable pr) {
         List<BatchJobData> batchJobDataList = new ArrayList<>();
-        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterValueLike(Date.from(from), Date.from(to), userId, pr);
-        processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
-        return new PageImpl<BatchJobData>(batchJobDataList, pr, batchJobDataList.size());
+        Page<BatchJobExecution> page = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date.from(from), Date.from(to), emailParameterName, userId, pr);
+        processBatchJobExecutionData(batchJobDataList, page.getContent());
+        return new PageImpl<BatchJobData>(batchJobDataList, page.getPageable(), batchJobDataList.size());
     }
 
     private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {
