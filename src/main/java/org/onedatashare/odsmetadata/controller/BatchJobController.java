@@ -54,30 +54,20 @@ public class BatchJobController {
      * @return List of jobIds
      */
     @GetMapping("/user_jobs")
-    public Page<Long> getUserJobIds(@RequestParam String userEmail, Pageable page) {
-        List<Long> userEmailList = new ArrayList<>();
-        Preconditions.checkNotNull(userEmail);
-        log.info(userEmail);
-        if (validateUserEmail(userEmail)) {
-            return jobService.getUserJobIds(userEmail, page);
-        }
-        return new PageImpl<>(userEmailList, page, userEmailList.size());
+    public List<Long> getUserJobIds(@RequestParam String userEmail) {
+        return jobService.getUserJobIds(userEmail);
     }
 
     @GetMapping("/uuids")
-    public Page<UUID> getUserUuids(@RequestParam String userEmail, Pageable page) {
-        List<UUID> userUuids = new ArrayList<>();
+    public List<UUID> getUserUuids(@RequestParam String userEmail) {
         Preconditions.checkNotNull(userEmail);
-        if (validateUserEmail(userEmail)) {
-            return jobService.getUserUuids(userEmail, page);
-        }
-        return new PageImpl<>(userUuids, page, userUuids.size());
+        return jobService.getUserUuids(userEmail);
     }
 
     @GetMapping("/job/uuid")
-    public Page<BatchJobData> getBatchJobByUuid(@RequestParam UUID jobUuid, Pageable page) {
+    public BatchJobData getBatchJobByUuid(@RequestParam UUID jobUuid) {
         Preconditions.checkNotNull(jobUuid);
-        return jobService.getBatchDataFromUuids(jobUuid, page);
+        return jobService.getBatchDataFromUuids(jobUuid);
     }
 
     /**
@@ -260,8 +250,8 @@ public class BatchJobController {
         List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
         TransferSummary summary = new TransferSummary();
         summary.updateSummary(measurementData);
-        List<BatchJobData> jobData = jobService.getBatchDataFromUuids(jobUuid);
-        summary.setTransferStatus(jobData.get(0).getStatus());
+        BatchJobData jobData = jobService.getBatchDataFromUuids(jobUuid);
+        summary.setTransferStatus(jobData.getStatus());
         return summary;
     }
 }
