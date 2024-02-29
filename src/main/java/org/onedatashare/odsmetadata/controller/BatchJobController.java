@@ -2,10 +2,7 @@ package org.onedatashare.odsmetadata.controller;
 
 import com.google.common.base.Preconditions;
 import lombok.extern.slf4j.Slf4j;
-import org.onedatashare.odsmetadata.model.BatchJobData;
-import org.onedatashare.odsmetadata.model.InfluxData;
-import org.onedatashare.odsmetadata.model.MonitorData;
-import org.onedatashare.odsmetadata.model.TransferSummary;
+import org.onedatashare.odsmetadata.model.*;
 import org.onedatashare.odsmetadata.services.InfluxIOService;
 import org.onedatashare.odsmetadata.services.JobService;
 import org.springframework.data.domain.Page;
@@ -55,7 +52,9 @@ public class BatchJobController {
      */
     @GetMapping("/user_jobs")
     public List<Long> getUserJobIds(@RequestParam String userEmail) {
-        return jobService.getUserJobIds(userEmail);
+        List<Long> jobIds = jobService.getUserJobIds(userEmail);
+        log.info("{}: total Jobs {}", userEmail, jobIds.size());
+        return jobIds;
     }
 
     @GetMapping("/uuids")
@@ -67,7 +66,7 @@ public class BatchJobController {
     @GetMapping("/job/uuid")
     public BatchJobData getBatchJobByUuid(@RequestParam UUID jobUuid) {
         Preconditions.checkNotNull(jobUuid);
-        return jobService.getBatchDataFromUuids(jobUuid);
+        return jobService.getBatchDataFromUuid(jobUuid);
     }
 
     /**
@@ -104,7 +103,13 @@ public class BatchJobController {
     public Page<BatchJobData> getPageJobStats(@RequestParam String userEmail, Pageable pageable) {
         Preconditions.checkNotNull(userEmail);
         Preconditions.checkNotNull(pageable);
+        log.info("UserEmail: {}, Pageable: {}", userEmail, pageable);
         return jobService.getAllJobStatisticsOfUser(userEmail, pageable);
+    }
+
+    @GetMapping("/stat/running")
+    public List<BatchJobData> queryRunningJobs(@RequestParam String userEmail, @RequestParam Status status){
+        return jobService.queryRunningJobs(userEmail, status);
     }
 
     /**
@@ -250,7 +255,7 @@ public class BatchJobController {
         List<InfluxData> measurementData = influxIOService.getJobViaUuid(userEmail, jobUuid);
         TransferSummary summary = new TransferSummary();
         summary.updateSummary(measurementData);
-        BatchJobData jobData = jobService.getBatchDataFromUuids(jobUuid);
+        BatchJobData jobData = jobService.getBatchDataFromUuid(jobUuid);
         summary.setTransferStatus(jobData.getStatus());
         return summary;
     }

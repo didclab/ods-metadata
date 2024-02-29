@@ -7,6 +7,7 @@ import org.onedatashare.odsmetadata.entity.BatchJobExecution;
 import org.onedatashare.odsmetadata.entity.BatchJobExecutionParams;
 import org.onedatashare.odsmetadata.mapper.BatchJobMapper;
 import org.onedatashare.odsmetadata.model.BatchJobData;
+import org.onedatashare.odsmetadata.model.Status;
 import org.onedatashare.odsmetadata.repository.BatchJobParamRepository;
 import org.onedatashare.odsmetadata.repository.BatchJobRepository;
 import org.springframework.data.domain.Page;
@@ -115,8 +116,11 @@ public class JobService {
     }
 
     //pageable version
-    public BatchJobData getBatchDataFromUuids(UUID jobUuid) {
+    public BatchJobData getBatchDataFromUuid(UUID jobUuid) {
         BatchJobExecutionParams jobParam = batchJobParamRepository.findBatchJobExecutionParamsByParameterNameLikeAndParameterValueLike(jobUuidParameterName, jobUuid.toString());
+        if(jobParam == null){
+             return new BatchJobData();
+        }
         BatchJobExecution jobData = batchJobRepository.findBatchJobExecutionById(jobParam.getJobExecutionId());
         BatchJobData batchJobData = mapper.mapBatchJobEntityToModel(jobData);
         if (!CollectionUtils.isEmpty(jobData.getBatchJobParams())) {
@@ -131,6 +135,13 @@ public class JobService {
         Page<BatchJobExecution> page = batchJobRepository.findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date.from(from), Date.from(to), emailParameterName, userId, pr);
         processBatchJobExecutionData(batchJobDataList, page.getContent());
         return new PageImpl<BatchJobData>(batchJobDataList, page.getPageable(), batchJobDataList.size());
+    }
+
+    public List<BatchJobData> queryRunningJobs(String userEmail, Status status) {
+        List<BatchJobData> batchJobDataList = new ArrayList<>();
+        List<BatchJobExecution> batchJobExecutions = batchJobRepository.findAllByBatchJobParams_ParameterNameLikeAndBatchJobParams_ParameterValueLikeAndStatus(emailParameterName, userEmail, status.toString());
+        processBatchJobExecutionData(batchJobDataList, batchJobExecutions);
+        return batchJobDataList;
     }
 
     private void processBatchJobExecutionData(List<BatchJobData> batchJobDataList, List<BatchJobExecution> batchJobExecutions) {
@@ -154,5 +165,4 @@ public class JobService {
         }
         return jobParameters;
     }
-
 }

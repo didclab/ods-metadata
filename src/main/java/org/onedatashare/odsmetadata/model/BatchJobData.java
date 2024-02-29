@@ -33,4 +33,5 @@ public class BatchJobData {
     List<BatchStepExecution> batchSteps;
 
     Map<String,String> jobParameters;
+
 }

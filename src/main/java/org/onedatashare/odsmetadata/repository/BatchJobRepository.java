@@ -26,4 +26,6 @@ public interface BatchJobRepository extends PagingAndSortingRepository<BatchJobE
     Page<BatchJobExecution> findAllByBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(String parameterName, String userId, Pageable pr);
 
     Page<BatchJobExecution> findByStartTimeIsGreaterThanEqualAndEndTimeIsLessThanEqualAndBatchJobParams_ParameterNameAndBatchJobParams_ParameterValueLike(Date startTime, Date endTime, String parameterName, String userId, Pageable pr);
+
+    List<BatchJobExecution> findAllByBatchJobParams_ParameterNameLikeAndBatchJobParams_ParameterValueLikeAndStatus(String parameterName, String userId, String status);
 }
